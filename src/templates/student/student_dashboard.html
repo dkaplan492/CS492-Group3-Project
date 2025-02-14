@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Student Dashboard</title>
+</head>
+<body>
+    <h1>Welcome to the Student Dashboard</h1>
+    <div>
+        <a href="{{ url_for('main.student_assignments_homework') }}" style="text-decoration: none; padding: 10px 20px; background-color: #007BFF; color: white; border: none; border-radius: 5px; margin: 5px;">Assignments and Homework</a>
+        <a href="{{ url_for('main.student_bus_schedule') }}" style="text-decoration: none; padding: 10px 20px; background-color: #007BFF; color: white; border: none; border-radius: 5px; margin: 5px;">Bus Schedule</a>
+        <a href="{{ url_for('main.student_class_announcements') }}" style="text-decoration: none; padding: 10px 20px; background-color: #007BFF; color: white; border: none; border-radius: 5px; margin: 5px;">Class Announcements</a>
+        <a href="{{ url_for('main.student_classes_and_grades') }}" style="text-decoration: none; padding: 10px 20px; background-color: #007BFF; color: white; border: none; border-radius: 5px; margin: 5px;">Classes and Grades</a>
+        <a href="{{ url_for('main.student_profile_settings') }}" style="text-decoration: none; padding: 10px 20px; background-color: #007BFF; color: white; border: none; border-radius: 5px; margin: 5px;">Profile and Settings</a>
+        <a href="{{ url_for('main.student_teacher_communication') }}" style="text-decoration: none; padding: 10px 20px; background-color: #007BFF; color: white; border: none; border-radius: 5px; margin: 5px;">Teacher Communication</a>
+        <a href="{{ url_for('auth.logout') }}" style="text-decoration: none; padding: 10px 20px; background-color: #DC3545; color: white; border: none; border-radius: 5px; margin: 5px;">Logout</a>
+    </div>
+</body>
+</html>

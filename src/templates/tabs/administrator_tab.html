@@ -1,0 +1,21 @@
+<div id="administrators" class="tab-content">
+    <div class="centered-content">
+        <h2>Admin Login</h2>
+        {% with messages = get_flashed_messages(category_filter=["error"]) %}
+        {% if messages %}
+            {% for message in messages %}
+                <p style="color: red; text-align: center; font-weight: bold;">{{ message }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}    
+        <form method="POST" action="{{ url_for('auth.login') }}">
+            <input type="hidden" name="role" value="Administrator">
+            <label for="username">Username:</label>
+            <input type="text" name="username" maxlength="50" required>
+            <label for="password">Password:</label>
+            <input type="password" name="password" required>
+            <button type="submit">Log In</button>
+        </form>
+        <a href="{{ url_for('auth.reset_password_page') }}">Reset Username/Password</a>
+    </div>
+</div>

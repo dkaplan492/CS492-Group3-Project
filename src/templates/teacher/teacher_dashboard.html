@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Teacher Dashboard</title>
+</head>
+<body>
+    <h1>Welcome to the Teacher Dashboard</h1>
+    <div>
+        <a href="{{ url_for('main.teacher_assign_grades') }}" style="text-decoration: none; padding: 10px 20px; background-color: #007BFF; color: white; border: none; border-radius: 5px; margin: 5px;">Assign Grades</a>
+        <a href="{{ url_for('main.teacher_attendance') }}" style="text-decoration: none; padding: 10px 20px; background-color: #007BFF; color: white; border: none; border-radius: 5px; margin: 5px;">Attendance</a>
+        <a href="{{ url_for('main.teacher_bus_schedule_lookup') }}" style="text-decoration: none; padding: 10px 20px; background-color: #007BFF; color: white; border: none; border-radius: 5px; margin: 5px;">Bus Schedule Lookup</a>
+        <a href="{{ url_for('main.teacher_class_announcements') }}" style="text-decoration: none; padding: 10px 20px; background-color: #007BFF; color: white; border: none; border-radius: 5px; margin: 5px;">Class Announcements</a>
+        <a href="{{ url_for('main.teacher_manage_student_records') }}" style="text-decoration: none; padding: 10px 20px; background-color: #007BFF; color: white; border: none; border-radius: 5px; margin: 5px;">Manage Student Records</a>
+        <a href="{{ url_for('main.teacher_received_messages') }}" style="text-decoration: none; padding: 10px 20px; background-color: #007BFF; color: white; border: none; border-radius: 5px; margin: 5px;">Received Messages</a>
+        <a href="{{ url_for('main.teacher_reporting') }}" style="text-decoration: none; padding: 10px 20px; background-color: #007BFF; color: white; border: none; border-radius: 5px; margin: 5px;">Reporting</a>
+        <a href="{{ url_for('main.teacher_student_profiles') }}" style="text-decoration: none; padding: 10px 20px; background-color: #007BFF; color: white; border: none; border-radius: 5px; margin: 5px;">Student Profiles</a>
+        <a href="{{ url_for('main.teacher_view_schedule') }}" style="text-decoration: none; padding: 10px 20px; background-color: #007BFF; color: white; border: none; border-radius: 5px; margin: 5px;">View Schedule</a>
+        <a href="{{ url_for('auth.logout') }}" style="text-decoration: none; padding: 10px 20px; background-color: #DC3545; color: white; border: none; border-radius: 5px; margin: 5px;">Logout</a>
+    </div>
+</body>
+</html>

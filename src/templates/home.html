@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>School Management System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+
+        .header {
+            background-color: #007bff;
+            color: white;
+            padding: 30px;
+            text-align: center;
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+
+        .tabs {
+            display: flex;
+            justify-content: center;
+            background-color: #ddd;
+            border-bottom: 2px solid #ccc;
+        }
+
+        .tabs button {
+            background-color: inherit;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            padding: 14px 20px;
+            transition: 0.3s;
+            font-size: 1em;
+            font-weight: bold;
+        }
+
+        .tabs button:hover {
+            background-color: #bbb;
+        }
+
+        .tabs button.active {
+            background-color: #0026ff;
+            color: white;
+        }
+
+        .tab-content {
+            display: none; /* Hide all tabs by default */
+        }
+
+        .tab-content.active {
+            display: flex; /* Show only the active tab */
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .centered-content {
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+
+        form {
+            margin-top: 1em;
+            text-align: center; /* Center align form content */
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5em;
+            text-align: center;
+        }
+
+        input {
+            width: 100%;
+            margin-bottom: 1em;
+            padding: 0.5em;
+        }
+
+        button {
+            width: 100%;
+            padding: 0.5em;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 1em;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        a {
+            color: #007bff;
+            text-decoration: none;
+            font-size: 0.9em;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">Welcome to the School Management System</div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+        <button class="tab-link" onclick="openTab(event, 'home')">Home</button>
+        <button class="tab-link" onclick="openTab(event, 'students')">Students</button>
+        <button class="tab-link" onclick="openTab(event, 'parents')">Parents</button>
+        <button class="tab-link" onclick="openTab(event, 'teachers')">Teachers</button>
+        <button class="tab-link" onclick="openTab(event, 'administrators')">Administrators</button>
+    </div>
+
+    <!-- Include Tab Contents -->
+    {% include "tabs/home_tab.html" %}
+    {% include "tabs/student_tab.html" %}
+    {% include "tabs/parent_tab.html" %}
+    {% include "tabs/teacher_tab.html" %}
+    {% include "tabs/administrator_tab.html" %}
+
+    <!-- JavaScript for Tabs -->
+    <script>
+        function openTab(event, tabName) {
+            // Hide all tab contents
+            var tabContents = document.getElementsByClassName('tab-content');
+            for (var i = 0; i < tabContents.length; i++) {
+                tabContents[i].classList.remove('active');
+            }
+
+            // Remove active class from all tab links
+            var tabLinks = document.getElementsByClassName('tab-link');
+            for (var i = 0; i < tabLinks.length; i++) {
+                tabLinks[i].classList.remove('active');
+            }
+
+            // Show the selected tab content
+            document.getElementById(tabName).classList.add('active');
+
+            // Add active class to the clicked tab link
+            if (event) {
+                event.currentTarget.classList.add('active');
+            }
+        }
+
+        // Maintain active tab on page load
+        window.onload = function () {
+            var activeTab = "{{ active_tab }}";
+
+            // Activate the corresponding tab content
+            var content = document.getElementById(activeTab);
+            if (content) content.classList.add('active');
+
+            // Activate the corresponding tab link
+            var tabLinks = document.getElementsByClassName('tab-link');
+            for (var i = 0; i < tabLinks.length; i++) {
+                if (tabLinks[i].getAttribute("onclick").includes(activeTab)) {
+                    tabLinks[i].classList.add('active');
+                }
+            }
+        };
+    </script>
+</body>
+</html>

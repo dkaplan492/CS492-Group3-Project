@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Parent Dashboard</title>
+</head>
+<body>
+    <h1>Welcome to the Parent Dashboard</h1>
+    <div>
+        <a href="{{ url_for('main.parent_attendance_records') }}" style="text-decoration: none; padding: 10px 20px; background-color: #007BFF; color: white; border: none; border-radius: 5px; margin: 5px;">Attendance</a>
+        <a href="{{ url_for('main.parent_bus_schedule') }}" style="text-decoration: none; padding: 10px 20px; background-color: #007BFF; color: white; border: none; border-radius: 5px; margin: 5px;">Bus Schedule</a>
+        <a href="{{ url_for('main.parent_school_announcements') }}" style="text-decoration: none; padding: 10px 20px; background-color: #007BFF; color: white; border: none; border-radius: 5px; margin: 5px;">School Announcements</a>
+        <a href="{{ url_for('main.parent_teacher_communication') }}" style="text-decoration: none; padding: 10px 20px; background-color: #007BFF; color: white; border: none; border-radius: 5px; margin: 5px;">Teacher Announcements</a>
+        <a href="{{ url_for('main.parent_update_student_info') }}" style="text-decoration: none; padding: 10px 20px; background-color: #007BFF; color: white; border: none; border-radius: 5px; margin: 5px;">Update Student Information</a>
+        <a href="{{ url_for('main.parent_view_class_schedule') }}" style="text-decoration: none; padding: 10px 20px; background-color: #007BFF; color: white; border: none; border-radius: 5px; margin: 5px;">View Class Schedule</a>
+        <a href="{{ url_for('main.parent_view_student_grades') }}" style="text-decoration: none; padding: 10px 20px; background-color: #007BFF; color: white; border: none; border-radius: 5px; margin: 5px;">View Student Grades</a>
+        <a href="{{ url_for('auth.logout') }}" style="text-decoration: none; padding: 10px 20px; background-color: #DC3545; color: white; border: none; border-radius: 5px; margin: 5px;">Logout</a>
+    </div>
+</body>
+</html>
