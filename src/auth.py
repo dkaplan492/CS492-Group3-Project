@@ -24,6 +24,7 @@ def login():
         if user['role'] == role:
             session['username'] = user['username']
             session['role'] = user['role']
+            session['first_name'] = user.get('first_name', role.capitalize())
             print(f"[DEBUG] Login successful - Username: {user['username']}, Role: {user['role']}")
 
             # Redirect to the appropriate dashboard based on role

@@ -15,7 +15,8 @@ def verify_role(required_role):
 @main.route('/student_dashboard')
 def student_dashboard():
     if verify_role('Student'):
-        return render_template('student/student_dashboard.html')
+        first_name = session.get('first_name', 'Student')
+        return render_template('student/student_dashboard.html', name=first_name)
     return redirect(url_for('auth.home'))
 
 
