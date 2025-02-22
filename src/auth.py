@@ -30,14 +30,14 @@ def login():
             print(f"[DEBUG] Login successful - Username: {user['username']}, Role: {user['role']}")
 
             # Redirect to the appropriate dashboard based on role
-            if role == 'Student':
-                return redirect(f"{BASE_URL}/student_dashboard")
-            elif role == 'Parent':
-                return redirect(f"{BASE_URL}/parent_dashboard")
-            elif role == 'Teacher':
-                return redirect(f"{BASE_URL}/teacher_dashboard")
-            elif role == 'Administrator':
-                return redirect(f"{BASE_URL}/admin_dashboard")
+        if role == 'Student':
+            return redirect(url_for('main.student_dashboard'))
+        elif role == 'Parent':
+            return redirect(url_for('main.parent_dashboard'))
+        elif role == 'Teacher':
+            return redirect(url_for('main.teacher_dashboard'))
+        elif role == 'Administrator':
+            return redirect(url_for('main.admin_dashboard'))
         else:
             print(f"[DEBUG] Role mismatch - Username: {username}")
             flash("Invalid username or password.", category="error")
@@ -46,7 +46,7 @@ def login():
         flash("Invalid username or password.", category="error")
 
     # Use BASE_URL for the redirect
-    return redirect(f"{BASE_URL}/dashboard")
+    return redirect(url_for('auth.home'))
 
 
 @auth.route('/reset_password', methods=['GET', 'POST'])
