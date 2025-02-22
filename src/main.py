@@ -17,9 +17,6 @@ def verify_role(required_role):
 def student_dashboard():
     if verify_role('Student'):
         first_name = session.get('first_name', 'Student')
-
-        print(f"Redirecting to: {BASE_URL}/student_dashboard")
-
         return render_template('student/student_dashboard.html', name=first_name)
     return redirect(url_for('auth.home'))
 
