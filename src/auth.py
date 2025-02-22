@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request, session
+from flask import Blueprint, render_template, redirect, url_for, flash, request, session, current_app
 from werkzeug.security import check_password_hash
 from src import mongo
 
@@ -16,6 +16,8 @@ def login():
     username = request.form.get('username')
     password = request.form.get('password')
     role = request.form.get('role')
+
+    BASE_URL = current_app.config['BASE_URL']
 
     # Query the user from the MongoDB collection
     user = mongo.db.users.find_one({"username": username})
@@ -43,8 +45,8 @@ def login():
         print(f"[DEBUG] Invalid login - Username: {username}")
         flash("Invalid username or password.", category="error")
 
-    # Render the login page with the active tab set to the role
-    return render_template('home.html', active_tab=role.lower())
+    # Use BASE_URL for the redirect
+    return redirect(f"{BASE_URL}/dashboard")
 
 
 @auth.route('/reset_password', methods=['GET', 'POST'])

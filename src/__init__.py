@@ -18,9 +18,13 @@ def create_app():
 
     # Initialize MongoDB
     mongo.init_app(app)
+
+    # Load BASE_URL from environment (useful for API calls)
+    app.config['BASE_URL'] = os.getenv('BASE_URL', 'http://localhost:5000')
+
     print(f"MONGO_URI: {app.config.get('MONGO_URI')}")
     print(f"Mongo initialized: {mongo}")
-
+    print(f"BASE_URL: {app.config.get('BASE_URL')}")
 
     # Import and register blueprints
     from .main import main as main_blueprint

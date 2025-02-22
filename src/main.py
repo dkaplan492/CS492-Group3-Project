@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, session, redirect, url_for, flash
+from flask import Blueprint, render_template, session, redirect, url_for, flash, current_app
 from src import mongo
 
 main = Blueprint('main', __name__)
@@ -11,11 +11,16 @@ def verify_role(required_role):
     flash(f'Unauthorized access. Please log in as a {required_role.lower()}.')
     return False
 
+
 # Student Dashboard
 @main.route('/student_dashboard')
 def student_dashboard():
     if verify_role('Student'):
         first_name = session.get('first_name', 'Student')
+
+        BASE_URL = current_app.config.get('BASE_URL', 'http://localhost:5000')
+        print(f"Redirecting to: {BASE_URL}/student_dashboard")
+
         return render_template('student/student_dashboard.html', name=first_name)
     return redirect(url_for('auth.home'))
 
