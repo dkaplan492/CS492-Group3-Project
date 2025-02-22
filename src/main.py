@@ -18,7 +18,6 @@ def student_dashboard():
     if verify_role('Student'):
         first_name = session.get('first_name', 'Student')
 
-        BASE_URL = current_app.config.get('BASE_URL', 'http://localhost:5000')
         print(f"Redirecting to: {BASE_URL}/student_dashboard")
 
         return render_template('student/student_dashboard.html', name=first_name)

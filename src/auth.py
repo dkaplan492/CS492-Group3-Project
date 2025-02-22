@@ -31,13 +31,13 @@ def login():
 
             # Redirect to the appropriate dashboard based on role
             if role == 'Student':
-                return redirect(url_for('main.student_dashboard'))
+                return redirect(f"{BASE_URL}/student_dashboard")
             elif role == 'Parent':
-                return redirect(url_for('main.parent_dashboard'))
+                return redirect(f"{BASE_URL}/parent_dashboard")
             elif role == 'Teacher':
-                return redirect(url_for('main.teacher_dashboard'))
+                return redirect(f"{BASE_URL}/teacher_dashboard")
             elif role == 'Administrator':
-                return redirect(url_for('main.admin_dashboard'))
+                return redirect(f"{BASE_URL}/admin_dashboard")
         else:
             print(f"[DEBUG] Role mismatch - Username: {username}")
             flash("Invalid username or password.", category="error")
