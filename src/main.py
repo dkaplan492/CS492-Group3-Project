@@ -322,6 +322,13 @@ def manage_users_permissions():
     return redirect(url_for('auth.home'))
 
 
+@main.route('/audit_log')
+def audit_log():
+    if verify_role('Administrator'):
+        return render_template('admin/audit_log.html')
+    return redirect(url_for('auth.home'))
+
+
 # Parent Dashboard
 @main.route('/parent_dashboard')
 def parent_dashboard():
