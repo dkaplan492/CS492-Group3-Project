@@ -1,10 +1,63 @@
-<div id="home" class="tab-content active">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Our School</title>
+  <style>
+    /* Main content styling */
+    .centered-content {
+      text-align: center;
+      padding: 20px;
+    }
+    .home-image {
+      width: 400px;
+      height: auto;
+      display: block;
+      margin: auto;
+    }
+    
+    /* Bottom images container styling */
+    .bottom-images {
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px;
+      background-color: #fff; 
+    }
+    .bottom-images .image-block img {
+      max-width: 400px; 
+      height: auto;
+    }
+  </style>
+</head>
+<body>
+  <!-- Main Content -->
+  <div id="home" class="tab-content active">
     <div class="home-description">
-        <div class="centered-content">
-            <img src="path/to/your/image.jpg" alt="School Image" class="home-image">
-            <h2>About Our School</h2>
-            <p>Our school is committed to providing quality education that fosters academic excellence, personal growth, and community involvement. With a focus on both traditional and modern teaching methodologies, we aim to prepare our students for a dynamic and ever-changing world.</p>
-            <p>Our dedicated faculty, state-of-the-art facilities, and diverse extracurricular programs create an enriching environment where every student can thrive and achieve their full potential.</p>
-        </div>
+      <div class="centered-content">
+        <img src="{{ url_for('static', filename='images/school_image.png') }}" alt="School Image" class="home-image">
+        <h2>About Our School</h2>
+        <p>Our school is committed to providing quality education that fosters academic excellence, personal growth, and community involvement. With a focus on both traditional and modern teaching methodologies, we aim to prepare our students for a dynamic and ever-changing world.</p>
+        <p>Our dedicated faculty, state-of-the-art facilities, and diverse extracurricular programs create an enriching environment where every student can thrive and achieve their full potential.</p>
+      </div>
     </div>
-</div>
+  </div>
+  
+  <!-- Bottom Images -->
+  <div class="bottom-images">
+    <div class="image-block left">
+      <img src="{{ url_for('static', filename='images/image_left.png') }}" alt="Left Image">
+    </div>
+    <div class="image-block center">
+      <img src="{{ url_for('static', filename='images/image_center.png') }}" alt="Center Image">
+    </div>
+    <div class="image-block right">
+      <img src="{{ url_for('static', filename='images/image_right.png') }}" alt="Right Image">
+    </div>
+  </div>
+</body>
+</html>

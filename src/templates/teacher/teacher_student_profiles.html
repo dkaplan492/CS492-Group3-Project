@@ -1,9 +1,160 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Place Holder Title</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher - Student Profiles</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #d9eaf6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        header {
+            background-color: #007BFF;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            border-top: 5px solid #004aad;
+            width: 100vw;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+            margin: 0;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .content {
+            margin-top: 80px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 80%;
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        select {
+            padding: 8px;
+            border-radius: 4px;
+            margin-left: 10px;
+        }
+        .table-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #264653;
+            color: white;
+        }
+        .back-button {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            background-color: #007BFF;
+            color: white;
+            padding: 10px 15px;
+            font-size: 16px;
+            font-weight: bold;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background 0.3s;
+            display: inline-block;
+            z-index: 1100;
+        }
+
+        .back-button:hover {
+            background-color: #0056b3;
+        }
+    </style>
 </head>
 <body>
-    <h1>Place Holder Body</h1>
+    <header>Student Profiles</header>
+    <div class="content">
+        <a href="/teacher_dashboard" class="back-button">← Back to Dashboard</a>
+        <div class="controls">
+            <label for="student-select">Select Student:</label>
+            <select id="student-select">
+                <option value="">-- Select a Student --</option>
+            </select>
+        </div>
+        <div class="table-container">
+            <table id="student-profile">
+                <tr><th>Student ID</th><td id="student-id"></td></tr>
+                <tr><th>First Name</th><td id="first-name"></td></tr>
+                <tr><th>Last Name</th><td id="last-name"></td></tr>
+                <tr><th>Date of Birth</th><td id="dob"></td></tr>
+                <tr><th>Grade Level</th><td id="grade-level"></td></tr>
+                <tr><th>Email</th><td id="email"></td></tr>
+                <tr><th>Phone</th><td id="phone"></td></tr>
+                <tr><th>Address</th><td id="address"></td></tr>
+                <tr><th>Emergency Contacts</th><td id="emergency-contacts"></td></tr>
+                <tr><th>Bus Schedule</th><td id="bus-schedule"></td></tr>
+            </table>
+        </div>
+    </div>
+    <script>
+        $(document).ready(function() {
+            $.getJSON("/profile_get_students", function(data) {
+                let students = data.students;
+                students.forEach(student => {
+                    $('#student-select').append(new Option(student.name, student.id));
+                });
+            });
+    
+            $('#student-select').change(function() {
+                let studentId = $(this).val();
+                
+                // Clear existing data
+                $('#student-id, #first-name, #last-name, #dob, #grade-level, #email, #phone, #address, #emergency-contacts, #bus-schedule').text('');
+    
+                if (studentId) {
+                    $.getJSON(`/get_student_profile/${studentId}`, function(data) {
+                        $('#student-id').text(data.student_id || '');
+                        $('#first-name').text(data.first_name || '');
+                        $('#last-name').text(data.last_name || '');
+                        $('#dob').text(data.date_of_birth || '');
+                        $('#grade-level').text(data.grade_level || '');
+                        $('#email').text(data.email || '');
+                        $('#phone').text(data.phone || '');
+    
+                        if (data.address) {
+                            $('#address').text(`${data.address.street || ''}, ${data.address.city || ''}, ${data.address.state || ''} ${data.address.zip || ''}`);
+                        } else {
+                            $('#address').text('');
+                        }
+    
+                        let emergencyContacts = (data.emergency_contacts || []).map(ec => `${ec.name} (${ec.relation || 'Unknown'}) - ${ec.phone}`).join('<br>');
+                        $('#emergency-contacts').html(emergencyContacts || '');
+    
+                        $('#bus-schedule').html(data.bus_schedule || '');
+                    });
+                }
+            });
+        });
+    </script>    
 </body>
 </html>

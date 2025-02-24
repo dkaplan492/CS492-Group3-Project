@@ -1,19 +1,159 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Parent Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #e6f7ff;
+            display: flex;
+            flex-direction: column;
+        }
+        header {
+            background-color: #007BFF;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            border-top: 5px solid #004aad;
+        }
+        .container {
+            display: flex;
+            flex: 1;
+            padding: 50px;
+        }
+        .sidebar {
+            width: 1000px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px;
+            border-radius: 10px;
+        }
+        .sidebar a {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-decoration: none;
+            padding: 12px 15px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            width: 130%;
+            max-width: 210px;
+            text-align: center;
+            transition: background 0.3s;
+        }
+        .sidebar a:hover {
+            background-color: #0056b3;
+        }
+        .logout {
+            background-color: #DC3545 !important;
+        }
+        .logout:hover {
+            background-color: #b02a37 !important;
+        }
+        .calendar {
+            flex: 1;
+            padding: 10px;
+            display: flex;
+            justify-content: left;
+            align-items: center;
+            padding-right: 50px;
+        }
+        .calendar table {
+            border-collapse: collapse;
+            width: 100%;
+            max-width: 300px;
+            background-color: white;
+            border: 1px solid #ccc;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .calendar th, .calendar td {
+            text-align: center;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        .calendar th {
+            background-color: #007BFF;
+            color: white;
+        }
+        .highlight {
+            background-color: #ffc107;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
-    <h1>Welcome to the Parent Dashboard</h1>
-    <div>
-        <a href="{{ url_for('main.parent_attendance_records') }}" style="text-decoration: none; padding: 10px 20px; background-color: #007BFF; color: white; border: none; border-radius: 5px; margin: 5px;">Attendance</a>
-        <a href="{{ url_for('main.parent_bus_schedule') }}" style="text-decoration: none; padding: 10px 20px; background-color: #007BFF; color: white; border: none; border-radius: 5px; margin: 5px;">Bus Schedule</a>
-        <a href="{{ url_for('main.parent_school_announcements') }}" style="text-decoration: none; padding: 10px 20px; background-color: #007BFF; color: white; border: none; border-radius: 5px; margin: 5px;">School Announcements</a>
-        <a href="{{ url_for('main.parent_teacher_communication') }}" style="text-decoration: none; padding: 10px 20px; background-color: #007BFF; color: white; border: none; border-radius: 5px; margin: 5px;">Teacher Announcements</a>
-        <a href="{{ url_for('main.parent_update_student_info') }}" style="text-decoration: none; padding: 10px 20px; background-color: #007BFF; color: white; border: none; border-radius: 5px; margin: 5px;">Update Student Information</a>
-        <a href="{{ url_for('main.parent_view_class_schedule') }}" style="text-decoration: none; padding: 10px 20px; background-color: #007BFF; color: white; border: none; border-radius: 5px; margin: 5px;">View Class Schedule</a>
-        <a href="{{ url_for('main.parent_view_student_grades') }}" style="text-decoration: none; padding: 10px 20px; background-color: #007BFF; color: white; border: none; border-radius: 5px; margin: 5px;">View Student Grades</a>
-        <a href="{{ url_for('auth.logout') }}" style="text-decoration: none; padding: 10px 20px; background-color: #DC3545; color: white; border: none; border-radius: 5px; margin: 5px;">Logout</a>
+    <header>
+        Welcome to the Parent Dashboard, {{ name }}!
+    </header>
+    <div class="container">
+        <div class="sidebar">
+        <a href="{{ url_for('main.parent_attendance_records') }}">Attendance</a>
+        <a href="{{ url_for('main.parent_bus_schedule') }}">Bus Schedule</a>
+        <a href="{{ url_for('main.parent_view_class_schedule') }}">View Class Schedule</a>
+        <a href="{{ url_for('main.parent_view_student_grades') }}">View Student Grades</a>
+            <a href="{{ url_for('auth.logout') }}" class="logout">Logout</a>
+        </div>
+        <div class="calendar">
+            <table id="calendar">
+                <!-- Calendar will be dynamically generated here -->
+            </table>
+        </div>
     </div>
+    <script>
+        function generateCalendar() {
+            const calendar = document.getElementById('calendar');
+            const now = new Date();
+            const currentYear = now.getFullYear();
+            const currentMonth = now.getMonth();
+            const currentDay = now.getDate();
+
+            // Get the first day of the month and the total days in the month
+            const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+            // Set the header
+            const monthNames = [
+                'January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'
+            ];
+            let html = `<tr><th colspan="7">${monthNames[currentMonth]} ${currentYear}</th></tr>`;
+            html += `<tr><th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th></tr>`;
+
+            // Generate calendar rows
+            let day = 1;
+            for (let i = 0; i < 6; i++) {
+                html += '<tr>';
+                for (let j = 0; j < 7; j++) {
+                    if (i === 0 && j < firstDay) {
+                        html += '<td></td>';
+                    } else if (day > daysInMonth) {
+                        html += '<td></td>';
+                    } else {
+                        const highlightClass = day === currentDay ? 'highlight' : '';
+                        html += `<td class="${highlightClass}">${day}</td>`;
+                        day++;
+                    }
+                }
+                html += '</tr>';
+                if (day > daysInMonth) break;
+            }
+
+            // Add generated HTML to the calendar
+            calendar.innerHTML = html;
+        }
+
+        // Generate the calendar when the page loads
+        generateCalendar();
+    </script>
 </body>
 </html>

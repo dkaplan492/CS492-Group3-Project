@@ -9,7 +9,7 @@
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #e6f7ff; /* Soft blue background */
+            background-color: #e6f7ff;
             display: flex;
             flex-direction: column;
         }
@@ -25,38 +25,48 @@
         .container {
             display: flex;
             flex: 1;
-            padding: 20px;
+            padding: 50px;
         }
         .sidebar {
-            width: 20%;
-            padding: 10px;
+            width: 1000px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px;
+            border-radius: 10px;
         }
         .sidebar a {
-            display: block;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             text-decoration: none;
-            padding: 10px 20px;
+            padding: 12px 15px;
             background-color: #007BFF;
             color: white;
             border: none;
-            border-radius: 5px;
+            border-radius: 10px;
             margin-bottom: 10px;
-            text-align: left;
+            width: 130%;
+            max-width: 210px;
+            text-align: center;
+            transition: background 0.3s;
         }
         .sidebar a:hover {
             background-color: #0056b3;
         }
         .logout {
-            background-color: #DC3545;
+            background-color: #DC3545 !important;
         }
         .logout:hover {
-            background-color: #b02a37;
+            background-color: #b02a37 !important;
         }
         .calendar {
             flex: 1;
-            padding: 20px;
+            padding: 10px;
             display: flex;
-            justify-content: center;
+            justify-content: left;
             align-items: center;
+            padding-right: 50px;
         }
         .calendar table {
             border-collapse: collapse;
@@ -89,10 +99,7 @@
         <div class="sidebar">
             <a href="{{ url_for('main.student_assignments_homework') }}">Assignments and Homework</a>
             <a href="{{ url_for('main.student_bus_schedule') }}">Bus Schedule</a>
-            <a href="{{ url_for('main.student_class_announcements') }}">Class Announcements</a>
             <a href="{{ url_for('main.student_classes_and_grades') }}">Classes and Grades</a>
-            <a href="{{ url_for('main.student_profile_settings') }}">Profile and Settings</a>
-            <a href="{{ url_for('main.student_teacher_communication') }}">Teacher Communication</a>
             <a href="{{ url_for('auth.logout') }}" class="logout">Logout</a>
         </div>
         <div class="calendar">
