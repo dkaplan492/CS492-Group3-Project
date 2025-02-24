@@ -26,18 +26,29 @@ def login():
         if user['role'] == role:
             session['username'] = user['username']
             session['role'] = user['role']
-            session['first_name'] = user.get('first_name', role.capitalize())
+            session['name'] = user.get('name', role.capitalize())
             print(f"[DEBUG] Login successful - Username: {user['username']}, Role: {user['role']}")
 
             # Redirect to the appropriate dashboard based on role
         if role == 'Student':
             return redirect(url_for('main.student_dashboard'))
+        
         elif role == 'Parent':
             return redirect(url_for('main.parent_dashboard'))
+        
         elif role == 'Teacher':
+            teacher_profile = mongo.db["Teacher Profile"].find_one({"teacher_id": username})
+
+            session['teacher_profile'] = {
+                "teacher_id": teacher_profile["teacher_id"],
+                "name": teacher_profile["name"],
+                "assigned_classes": teacher_profile["assigned_classes"]
+                }
             return redirect(url_for('main.teacher_dashboard'))
+        
         elif role == 'Administrator':
             return redirect(url_for('main.admin_dashboard'))
+        
         else:
             print(f"[DEBUG] Role mismatch - Username: {username}")
             flash("Invalid username or password.", category="error")
@@ -45,7 +56,7 @@ def login():
         print(f"[DEBUG] Invalid login - Username: {username}")
         flash("Invalid username or password.", category="error")
 
-    # Use BASE_URL for the redirect
+    
     return redirect(url_for('auth.home'))
 
 
@@ -60,8 +71,8 @@ def reset_password():
         # Query the user from the MongoDB collection
         user = mongo.db.users.find_one({"username": username, "role": role})
 
-        if user and user['email'] == email:  # Assuming an 'email' field exists in the MongoDB document
-            # Handle password reset logic (e.g., send reset link via email)
+        if user and user['email'] == email:
+            # Handle password reset logic
             print(f"[DEBUG] Password reset initiated for {username}, Role: {role}")
             flash(f"A password reset link has been sent to {email}.")
             return redirect(url_for('auth.home'))
@@ -86,3 +97,4 @@ def logout():
     session.clear()
     flash('You have been logged out.')
     return redirect(url_for('auth.home'))
+

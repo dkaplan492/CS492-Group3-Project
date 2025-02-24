@@ -1,13 +1,76 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Admin Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Administrator Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #e6f7ff;
+            display: flex;
+            flex-direction: column;
+        }
+        header {
+            background-color: #007BFF;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            border-top: 5px solid #004aad;
+        }
+        .container {
+            display: flex;
+            flex: 1;
+            padding: 50px;
+        }
+        .sidebar {
+            width: 1000px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px;
+            border-radius: 10px;
+        }
+        .sidebar a {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-decoration: none;
+            padding: 12px 15px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            width: 130%;
+            max-width: 210px;
+            text-align: center;
+            transition: background 0.3s;
+        }
+        .sidebar a:hover {
+            background-color: #0056b3;
+        }
+        .logout {
+            background-color: #DC3545 !important;
+        }
+        .logout:hover {
+            background-color: #b02a37 !important;
+        }
+    </style>
 </head>
 <body>
-    <h1>Welcome to the Admin Dashboard</h1>
-    <div>
-        <a href="{{ url_for('main.manage_users_permissions') }}" style="text-decoration: none; padding: 10px 20px; background-color: #007BFF; color: white; border: none; border-radius: 5px; margin: 5px;">Manage Users and Permissions</a>
-        <a href="{{ url_for('auth.logout') }}" style="text-decoration: none; padding: 10px 20px; background-color: #DC3545; color: white; border: none; border-radius: 5px; margin: 5px;">Logout</a>
+    <header>
+        Welcome to the Admin Dashboard, {{ name }}!
+    </header>
+    <div class="container">
+        <div class="sidebar">
+            <a href="{{ url_for('main.manage_users_permissions') }}">Manage Users</a>
+            <a href="{{ url_for('auth.logout') }}" class="logout">Logout</a>
+        </div>
     </div>
 </body>
 </html>

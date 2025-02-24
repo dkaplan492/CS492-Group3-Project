@@ -1,9 +1,193 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Assign Grades</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #d9eaf6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        header {
+            background-color: #007BFF;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            border-top: 5px solid #004aad;
+            width: 100vw;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+            margin: 0;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .content {
+            margin-top: 100px;
+            padding-top: 100px;
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            max-width: 1200px;
+            margin: auto;
+        }
+        .grading-section, .assign-homework-section {
+            width: 45%;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            text-align: center;
+            color: #007bff;
+        }
+        select, input {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #264653;
+            color: white;
+        }
+        .back-button {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            background-color: #007BFF;
+            color: white;
+            padding: 10px 15px;
+            font-size: 16px;
+            font-weight: bold;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background 0.3s;
+            display: inline-block;
+            z-index: 1100;
+        }
+
+        .back-button:hover {
+            background-color: #0056b3;
+        }
+    </style>
 </head>
 <body>
-    <h1>Assign Grades</h1>
+    <a href="{{ url_for('main.teacher_dashboard') }}" class="back-button">← Back to Dashboard</a>
+
+    <header>Assign Grades & Homework</header>
+    <div class="content">
+        <div class="grading-section">
+            <h2>Grade Assignments</h2>
+            <label for="student-select">Select Student:</label>
+            <select id="student-select">
+                <option value="">-- Select a Student --</option>
+            </select>
+            <table id="grades-table">
+                <thead>
+                    <tr>
+                        <th>Assigned Date</th>
+                        <th>Assignment Name</th>
+                        <th>Grade</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <div class="assign-homework-section">
+            <h2>Assign Homework</h2>
+            <label for="assignment-name">Assignment Name:</label>
+            <input type="text" id="assignment-name">
+            <label for="due-date">Due Date:</label>
+            <input type="date" id="due-date">
+            <button id="assign-homework">Assign Homework</button>
+        </div>
+    </div>
+    <script>
+        $(document).ready(function() {
+            $.getJSON("/grades_get_students", function(data) {
+                let students = data.students;
+                students.forEach(student => {
+                    $('#student-select').append(new Option(student.name, student.id));
+                });
+            });
+            
+            $('#student-select').change(function() {
+                let studentId = $(this).val();
+                $('#grades-table tbody').empty();
+                if (studentId) {
+                    $.getJSON(`/get_student_grades/${studentId}`, function(data) {
+                        data.assignments.forEach(assignment => {
+                            let row = `<tr>
+                                <td>${assignment.assigned_date}</td>
+                                <td>${assignment.name}</td>
+                                <td><input type='text' value='${assignment.grade}' id='grade-${assignment.id}' style='width: 50px; text-align: center;'></td>
+                                <td><button onclick='updateGrade("${studentId}", "${assignment.id}")'>Save</button></td>
+                            </tr>`;
+                            $('#grades-table tbody').append(row);
+                        });
+                    });
+                }
+            });
+            
+            window.updateGrade = function(studentId, assignmentId) {
+                let grade = $(`#grade-${assignmentId}`).val();
+                $.post("/submit_grade", {
+                    student_id: studentId,
+                    assignment_id: assignmentId,
+                    grade: grade
+                }, function(response) {
+                    alert(response.message);
+                });
+            };
+            
+            $('#assign-homework').click(function() {
+                let assignmentName = $('#assignment-name').val();
+                let dueDate = $('#due-date').val();
+                if (assignmentName && dueDate) {
+                    $.post("/assign_homework", {
+                        assignment_name: assignmentName,
+                        due_date: dueDate
+                    }, function(response) {
+                        alert(response.message);
+                    });
+                }
+            });
+        });
+    </script>
 </body>
 </html>
