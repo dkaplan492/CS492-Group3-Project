@@ -1,13 +1,17 @@
 <div id="administrators" class="tab-content">
     <div class="centered-content">
-        <h2>Admin Login</h2>
+      <h2>Administrator Login</h2>
+  
+      <!-- Show errors ONLY if the active tab is 'parents' -->
+      {% if active_tab == 'administrators' %}
         {% with messages = get_flashed_messages(category_filter=["error"]) %}
         {% if messages %}
-            {% for message in messages %}
-                <p style="color: red; text-align: center; font-weight: bold;">{{ message }}</p>
-            {% endfor %}
+          {% for message in messages %}
+            <p style="color: red; text-align: center; font-weight: bold;">{{ message }}</p>
+          {% endfor %}
         {% endif %}
-    {% endwith %}    
+        {% endwith %}
+      {% endif %}     
         <form method="POST" action="{{ url_for('auth.login') }}">
             <input type="hidden" name="role" value="Administrator">
             <label for="username">Username:</label>

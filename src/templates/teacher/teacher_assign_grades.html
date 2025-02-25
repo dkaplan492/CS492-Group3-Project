@@ -1,250 +1,285 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Assign Grades</title>
-    <link rel="stylesheet" href="/static/styles.css">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #d9eaf6;
-            color: #333;
-            margin: 0;
-            padding: 20px;
-        }
-        header {
-            background-color: #007BFF;
-            color: white;
-            padding: 20px;
-            text-align: center;
-            font-size: 24px;
-            font-weight: bold;
-            border-top: 5px solid #004aad;
-            width: 100vw;
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 1000;
-            margin: 0;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .content {
-            margin-top: 100px;
-            padding-top: 100px;
-            display: flex;
-            justify-content: center;
-            gap: 40px;
-            max-width: 1200px;
-            margin: auto;
-        }
-        .grading-section, .assign-homework-section {
-            width: 45%;
-            padding: 20px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-        }
-        h2 {
-            text-align: center;
-            color: #007bff;
-        }
-        select, input {
-            width: 100%;
-            padding: 8px;
-            margin: 5px 0 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        button {
-            width: 100%;
-            padding: 10px;
-            background-color: #28a745;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        button:hover {
-            background-color: #218838;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 10px;
-            text-align: left;
-        }
-        th {
-            background-color: #264653;
-            color: white;
-        }
-        .back-button {
-            position: fixed;
-            top: 15px;
-            left: 15px;
-            background-color: #007BFF;
-            color: white;
-            padding: 10px 15px;
-            font-size: 16px;
-            font-weight: bold;
-            text-decoration: none;
-            border-radius: 5px;
-            transition: background 0.3s;
-            display: inline-block;
-            z-index: 1100;
-        }
-
-        .back-button:hover {
-            background-color: #0056b3;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Assign Grades</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #d9eaf6;
+      color: #333;
+      margin: 0;
+      padding: 20px;
+    }
+    header {
+      background-color: #007BFF;
+      color: white;
+      padding: 20px;
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+      border-top: 5px solid #004aad;
+      width: 100vw;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 1000;
+      margin: 0;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .back-button {
+      position: fixed;
+      top: 15px;
+      left: 15px;
+      background-color: #007BFF;
+      color: white;
+      padding: 10px 15px;
+      font-size: 16px;
+      font-weight: bold;
+      text-decoration: none;
+      border-radius: 5px;
+      transition: background 0.3s;
+      z-index: 1100;
+    }
+    .back-button:hover {
+      background-color: #0056b3;
+    }
+    /* Flash message styling (matches manage_users_permissions.html) */
+    .message {
+      display: none;
+      background-color: #28a745;
+      color: white;
+      padding: 10px;
+      border-radius: 5px;
+      margin-bottom: 10px;
+      text-align: center;
+      width: 100%;
+    }
+    .content {
+      margin-top: 100px;
+      padding-top: 100px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 40px;
+      max-width: 1200px;
+      margin: auto;
+    }
+    /* Container for the two side-by-side sections */
+    .sections-container {
+      display: flex;
+      gap: 40px;
+      width: 100%;
+      justify-content: center;
+    }
+    .grading-section, .assign-homework-section {
+      width: 45%;
+      padding: 20px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    }
+    h2 {
+      text-align: center;
+      color: #007bff;
+    }
+    select, input {
+      width: 100%;
+      padding: 8px;
+      margin: 5px 0 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background-color: #218838;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: left;
+    }
+    th {
+      background-color: #264653;
+      color: white;
+    }
+  </style>
 </head>
 <body>
-    <a href="{{ url_for('main.teacher_dashboard') }}" class="back-button">← Back to Dashboard</a>
-
-    <header>Assign Grades & Homework</header>
-    <div class="content">
-        <div class="grading-section">
-            <h2>Grade Assignments</h2>
-            <label for="student-select">Select Student:</label>
-            <select id="student-select">
-                <option value="">-- Select a Student --</option>
-            </select>
-            <table id="grades-table">
-                <thead>
-                    <tr>
-                        <th>Assigned Date</th>
-                        <th>Assignment Name</th>
-                        <th>Grade</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </div>
-        <div class="assign-homework-section">
-            <h2>Assign Homework</h2>
-            <label for="assignment-name">Assignment Name:</label>
-            <input type="text" id="assignment-name">
-            <label for="assigned-date">Assigned Date:</label>
-            <input type="date" id="assigned-date">
-            <label for="due-date">Due Date:</label>
-            <input type="date" id="due-date">
-            <button id="assign-homework">Assign Homework</button>
-        </div>
+  <a href="{{ url_for('main.teacher_dashboard') }}" class="back-button">← Back to Dashboard</a>
+  <header>Assign Grades & Homework</header>
+  <div class="content">
+    <!-- Shared flash message container -->
+    <div id="updateMessage" class="message" style="display:none;"></div>
+    
+    <div class="sections-container">
+      <!-- Grading Section -->
+      <div class="grading-section">
+        <h2>Grade Assignments</h2>
+        <label for="student-select">Select Student:</label>
+        <select id="student-select">
+          <option value="">-- Select a Student --</option>
+        </select>
+        <table id="grades-table">
+          <thead>
+            <tr>
+              <th>Assigned Date</th>
+              <th>Assignment Name</th>
+              <th>Grade</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      
+      <!-- Homework Assignment Section -->
+      <div class="assign-homework-section">
+        <h2>Assign Homework</h2>
+        <label for="assignment-name">Assignment Name:</label>
+        <input type="text" id="assignment-name">
+        <label for="assigned-date">Assigned Date:</label>
+        <input type="date" id="assigned-date">
+        <label for="due-date">Due Date:</label>
+        <input type="date" id="due-date">
+        <button id="assign-homework">Assign Homework</button>
+      </div>
     </div>
-    <script>
-        $(document).ready(function() {
-            $.getJSON("/grades_get_students", function(data) {
-                let students = data.students;
-                students.forEach(student => {
-                    $('#student-select').append(new Option(student.name, student.id));
-                });
-            });
-            
-            $('#student-select').change(function() {
-                let studentId = $(this).val();
-                $('#grades-table tbody').empty();
-                if (studentId) {
-                    $.getJSON(`/get_student_grades/${studentId}`, function(data) {
-                        console.log("DEBUG: Assignments Received:", data);
+  </div>
+  
+  <script>
+    // Helper function to display messages in the shared flash element.
+    function showMessage(message, isError = false) {
+      var updateMessage = $("#updateMessage");
+      updateMessage.text(message);
+      updateMessage.css("background-color", isError ? "#dc3545" : "#28a745");
+      updateMessage.fadeIn();
+      setTimeout(function() {
+        updateMessage.fadeOut();
+      }, 5000);
+    }
 
-                        data.assignments.forEach(assignment => {
-                            console.log("DEBUG: Adding row for", assignment);
-                            
-                            let safeAssignmentName = assignment.name.replace(/\s+/g, '-');
-
-                            let row = `<tr>
-                                <td>${assignment.assigned_date}</td>  <!-- ✅ Ensure MM/DD/YYYY format is used -->
-                                <td>${assignment.name}</td>
-                                <td><input type='text' value='${assignment.grade || ''}' id='grade-${safeAssignmentName}' style='width: 50px; text-align: center;'></td>
-                                <td><button onclick='updateGrade("${studentId}", "${assignment.name}", "${assignment.assigned_date}")'>Save</button></td>
-                            </tr>`;
-                            $('#grades-table tbody').append(row);
-                        });
-                    });
-                }
-            });
-            
-            window.updateGrade = function(studentId, assignmentName, assignedDate) {
-                let safeAssignmentName = assignmentName.replace(/\s+/g, '-');  
-                let gradeInput = $(`#grade-${safeAssignmentName}`);
-
-                if (!gradeInput.length) {
-                    alert("Error: Grade input field not found!");
-                    console.log("ERROR: Missing grade input for", assignmentName, `#grade-${safeAssignmentName}`);
-                    return;
-                }
-
-                let grade = gradeInput.val().trim();
-
-                if (!grade) {
-                    alert("Grade cannot be empty!");
-                    return;
-                }
-
-                console.log("[DEBUG] Submitting grade with:", {
-                    student_id: studentId,
-                    assignment_name: assignmentName,
-                    assigned_date: assignedDate,
-                    grade: grade
-                });
-
-                $.ajax({
-                    url: "/submit_grade",
-                    type: "POST",
-                    contentType: "application/json",
-                    data: JSON.stringify({
-                        student_id: studentId,
-                        assignment_name: assignmentName,
-                        assigned_date: assignedDate,
-                        grade: grade
-                    }),
-                    success: function(response) {
-                        console.log("Success response:", response);
-                        alert(response.message);
-                    },
-                    error: function(xhr) {
-                        console.log("AJAX Error:", xhr.responseText);
-                        alert("Error submitting grade: " + xhr.responseText);
-                    }
-                });
-            };
-            
-            $('#assign-homework').click(function() {
-                let assignmentName = $('#assignment-name').val();
-                let assignedDate = $('#assigned-date').val();
-                let dueDate = $('#due-date').val();
-
-                if (!assignmentName || !assignedDate || !dueDate) {
-                    alert("All fields are required!");
-                    return;
-                }
-
-                // Convert assignedDate to MM/DD/YYYY format
-                let formattedAssignedDate = new Date(assignedDate).toLocaleDateString('en-US');
-
-                $.ajax({
-                    url: "/assign_homework",
-                    type: "POST",
-                    contentType: "application/json",
-                    data: JSON.stringify({
-                        assignment_name: assignmentName,
-                        assigned_date: formattedAssignedDate,
-                        due_date: dueDate
-                    }),
-                    success: function(response) {
-                        alert(response.message);
-                    }
-                });
-            });
+    $(document).ready(function() {
+      // Populate student select dropdown
+      $.getJSON("/grades_get_students", function(data) {
+        let students = data.students;
+        students.forEach(student => {
+          $('#student-select').append(new Option(student.name, student.id));
         });
-    </script>
+      });
+
+      // When a student is selected, load their assignments
+      $('#student-select').change(function() {
+        let studentId = $(this).val();
+        $('#grades-table tbody').empty();
+        if (studentId) {
+          $.getJSON(`/get_student_grades/${studentId}`, function(data) {
+            console.log("DEBUG: Assignments Received:", data);
+            if (data.assignments.length === 0) {
+              $('#grades-table tbody').append(`<tr><td colspan="4" style="text-align:center;">No assignments found.</td></tr>`);
+              return;
+            }
+            data.assignments.forEach(assignment => {
+              let safeAssignmentName = assignment.name.replace(/\s+/g, '-');
+              let row = `<tr>
+                <td>${assignment.assigned_date}</td>
+                <td>${assignment.name}</td>
+                <td><input type='text' value='${assignment.grade || ''}' id='grade-${safeAssignmentName}' style='width: 50px; text-align: center;'></td>
+                <td><button onclick='updateGrade("${studentId}", "${assignment.name}", "${assignment.assigned_date}")'>Save</button></td>
+              </tr>`;
+              $('#grades-table tbody').append(row);
+            });
+          });
+        }
+      });
+
+      // Function to update a student's grade using AJAX
+      window.updateGrade = function(studentId, assignmentName, assignedDate) {
+        let safeAssignmentName = assignmentName.replace(/\s+/g, '-');
+        let gradeInput = $(`#grade-${safeAssignmentName}`);
+        if (!gradeInput.length) {
+          showMessage("Error: Grade input field not found!", true);
+          console.log("ERROR: Missing grade input for", assignmentName, `#grade-${safeAssignmentName}`);
+          return;
+        }
+        let grade = gradeInput.val().trim();
+        if (!grade) {
+          showMessage("Grade cannot be empty!", true);
+          return;
+        }
+        console.log("[DEBUG] Submitting grade with:", {
+          student_id: studentId,
+          assignment_name: assignmentName,
+          assigned_date: assignedDate,
+          grade: grade
+        });
+        $.ajax({
+          url: "/submit_grade",
+          type: "POST",
+          contentType: "application/json",
+          data: JSON.stringify({
+            student_id: studentId,
+            assignment_name: assignmentName,
+            assigned_date: assignedDate,
+            grade: grade
+          }),
+          success: function(response) {
+            console.log("Success response:", response);
+            showMessage(response.message);
+          },
+          error: function(xhr) {
+            console.log("AJAX Error:", xhr.responseText);
+            showMessage("Error submitting grade: " + xhr.responseText, true);
+          }
+        });
+      };
+
+      // Homework assignment AJAX call
+      $('#assign-homework').click(function() {
+        let assignmentName = $('#assignment-name').val();
+        let assignedDate = $('#assigned-date').val();
+        let dueDate = $('#due-date').val();
+        if (!assignmentName || !assignedDate || !dueDate) {
+          showMessage("All fields are required!", true);
+          return;
+        }
+        // Convert assignedDate to MM/DD/YYYY format
+        let formattedAssignedDate = new Date(assignedDate).toLocaleDateString('en-US');
+        $.ajax({
+          url: "/assign_homework",
+          type: "POST",
+          contentType: "application/json",
+          data: JSON.stringify({
+            assignment_name: assignmentName,
+            assigned_date: formattedAssignedDate,
+            due_date: dueDate
+          }),
+          success: function(response) {
+            showMessage(response.message);
+          },
+          error: function(xhr) {
+            showMessage("Error submitting assignment: " + xhr.responseText, true);
+          }
+        });
+      });
+    });
+  </script>
 </body>
 </html>

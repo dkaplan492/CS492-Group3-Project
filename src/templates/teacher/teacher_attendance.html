@@ -19,11 +19,6 @@
             margin: 0;
             box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
         }
-
-        .content {
-            padding-top: 100px;
-        }
-
         body {
             font-family: Arial, sans-serif;
             background-color: #d9eaf6;
@@ -31,7 +26,9 @@
             margin: 0;
             padding: 20px;
         }
-
+        .content {
+            padding-top: 100px;
+        }
         .container {
             display: flex;
             justify-content: center;
@@ -40,7 +37,6 @@
             max-width: 1200px;
             margin: auto;
         }
-
         /* Left Side: Attendance Form */
         .attendance-form {
             width: 45%;
@@ -49,7 +45,6 @@
             border-radius: 8px;
             box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
         }
-
         /* Right Side: Filters & Records */
         .records-section {
             width: 45%;
@@ -58,14 +53,10 @@
             border-radius: 8px;
             box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
         }
-
-        /* Centered Headers */
         h1, h2 {
             text-align: center;
             color: #007bff;
         }
-
-        /* Inputs and Dropdowns */
         select, input {
             width: 100%;
             padding: 8px;
@@ -73,8 +64,6 @@
             border: 1px solid #ccc;
             border-radius: 4px;
         }
-
-        /* Buttons */
         button {
             width: 100%;
             padding: 10px;
@@ -85,49 +74,43 @@
             cursor: pointer;
             font-size: 16px;
         }
-
         button:hover {
             background-color: #218838;
         }
-
-        /* Table Styling */
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 10px;
         }
-
         th, td {
             border: 1px solid #ddd;
             padding: 8px;
             text-align: left;
         }
-
         th {
             background-color: #264653;
             color: white;
         }
-
         tr:nth-child(even) {
             background-color: #f2f2f2;
         }
-
-        /* Vertical Line Divider */
         .divider {
             width: 2px;
             background-color: #007bff;
             height: auto;
             margin: 0 20px;
         }
-
-        .success-message {
+        /* Shared Flash Message Styles */
+        .message {
+            display: none;
+            background-color: #28a745;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
             text-align: center;
-            color: red;
-            font-size: 18px;
-            font-weight: bold;
-            margin-top: 15px;
+            width: 100%;
         }
-
         .back-button {
             position: fixed;
             top: 15px;
@@ -143,14 +126,29 @@
             display: inline-block;
             z-index: 1100;
         }
-
         .back-button:hover {
             background-color: #0056b3;
         }
     </style>
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
+        // Helper function to display flash messages in a consistent pop-up style.
+        function showMessage(message, isError = false) {
+            var updateMessage = document.getElementById('updateMessage');
+            updateMessage.textContent = message;
+            updateMessage.style.backgroundColor = isError ? "#dc3545" : "#28a745";
+            updateMessage.style.display = 'block';
+            setTimeout(function() {
+                updateMessage.style.display = 'none';
+            }, 5000);
+        }
+        
+        document.addEventListener("DOMContentLoaded", function() {
             updateStudents();
+            // Check if there are any server-side flash messages and display them.
+            var flash = document.getElementById('serverFlash');
+            if (flash && flash.textContent.trim() !== '') {
+                showMessage(flash.textContent);
+            }
         });
 
         function updateStudents() {
@@ -160,26 +158,22 @@
                 document.getElementById('entry_student_id').innerHTML = '<option value="">Select a Class First</option>';
                 return;
             }
-            
             fetch(`/get_students/${classId}`)
                 .then(response => response.json())
                 .then(data => {
                     var filterDropdown = document.getElementById('filter_student_id');
                     var entryDropdown = document.getElementById('entry_student_id');
-                    filterDropdown.innerHTML = '';  
+                    filterDropdown.innerHTML = '';
                     entryDropdown.innerHTML = '';
-
                     if (data.students && data.students.length > 0) {
                         data.students.forEach((student) => {
                             var optionFilter = document.createElement('option');
                             optionFilter.value = student.id;
                             optionFilter.textContent = student.name;
-                            
                             if (student.id === "{{ selected_student_id }}") {
                                 optionFilter.selected = true;
                             }
                             filterDropdown.appendChild(optionFilter);
-
                             var optionEntry = document.createElement('option');
                             optionEntry.value = student.id;
                             optionEntry.textContent = student.name;
@@ -196,105 +190,94 @@
         function filterAttendance() {
             document.getElementById('filterForm').submit();
         }
-    </script>    
+    </script>
 </head>
 <body>
     <a href="{{ url_for('main.teacher_dashboard') }}" class="back-button">← Back to Dashboard</a>
-
-    <header> Teacher Attendance </header>
-
+    <header>Teacher Attendance</header>
     <div class="content">
-
-    <!-- Flash Messages -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <div class="success-message">
-                {% for category, message in messages %}
-                    <p class="{{ category }}">{{ message }}</p>
-                {% endfor %}
+        <!-- Shared flash message container -->
+        <div id="updateMessage" class="message"></div>
+        <!-- Hidden container to capture any server-side flash messages -->
+        <div id="serverFlash" style="display:none;">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        {{ message }}
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+        <!-- Flexbox Layout -->
+        <div class="container">
+            <!-- Left Side: Attendance Submission Form -->
+            <div class="attendance-form">
+                <h2>Submit New Attendance Record</h2>
+                <form method="POST" action="{{ url_for('main.teacher_attendance') }}">
+                    <input type="hidden" name="class_id" value="{{ selected_class_id }}">
+                    <label for="entry_student_id">Student:</label>
+                    <select id="entry_student_id" name="student_id" required>
+                        {% for student_id, student_name in student_data.items() %}
+                            <option value="{{ student_id }}">{{ student_name }} ({{ student_id }})</option>
+                        {% endfor %}
+                    </select><br><br>
+                    <label for="date">Date:</label>
+                    <input type="date" id="date" name="date" required><br><br>
+                    <label for="status">Status:</label>
+                    <select id="status" name="status" required>
+                        <option value="Present">Present</option>
+                        <option value="Late">Late</option>
+                        <option value="Absent">Absent</option>
+                    </select><br><br>
+                    <button type="submit">Submit</button>
+                </form>  
             </div>
-        {% endif %}
-    {% endwith %}
-
-    <!-- Flexbox Layout -->
-    <div class="container">
-
-        <!-- Left Side: Attendance Submission Form -->
-        <div class="attendance-form">
-            <h2>Submit New Attendance Record</h2>
-            <form method="POST" action="{{ url_for('main.teacher_attendance') }}">
-                <input type="hidden" name="class_id" value="{{ selected_class_id }}">
-
-                <label for="entry_student_id">Student:</label>
-                <select id="entry_student_id" name="student_id" required>
-                    {% for student_id, student_name in student_data.items() %}
-                        <option value="{{ student_id }}">{{ student_name }} ({{ student_id }})</option>
-                    {% endfor %}
-                </select><br><br>
-
-                <label for="date">Date:</label>
-                <input type="date" id="date" name="date" required><br><br>
-
-                <label for="status">Status:</label>
-                <select id="status" name="status" required>
-                    <option value="Present">Present</option>
-                    <option value="Late">Late</option>
-                    <option value="Absent">Absent</option>
-                </select><br><br>
-
-                <button type="submit">Submit</button>
-            </form>  
+            <!-- Vertical Divider -->
+            <div class="divider"></div>
+            <!-- Right Side: Filter & Existing Records -->
+            <div class="records-section">
+                <h2>Filter Attendance Records</h2>
+                <form id="filterForm" method="GET" action="{{ url_for('main.teacher_attendance') }}">
+                    <label for="class_id">Class:</label>
+                    <select id="class_id" name="class_id" onchange="filterAttendance(); updateStudents();" required>
+                        {% for cls in assigned_classes %}
+                            <option value="{{ cls.class_id }}" {% if cls.class_id == selected_class_id %}selected{% endif %}>
+                                {{ cls.subject }} ({{ cls.class_id }})
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <label for="filter_student_id">Student:</label>
+                    <select id="filter_student_id" name="student_id" onchange="filterAttendance()">
+                        {% for student_id, student_name in student_data.items() %}
+                            <option value="{{ student_id }}" {% if student_id == selected_student_id %}selected{% endif %}>
+                                {{ student_name }} ({{ student_id }})
+                            </option>
+                        {% endfor %}
+                    </select>
+                </form>
+                <h2>Existing Attendance Records</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Class</th>
+                            <th>Student</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in records %}
+                        <tr>
+                            <td>{{ record.class_id }}</td>
+                            <td>{{ record.student_name }} ({{ record.student_id }})</td>
+                            <td>{{ record.date }}</td>
+                            <td>{{ record.status }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
-
-        <!-- Vertical Divider -->
-        <div class="divider"></div>
-
-        <!-- Right Side: Filter & Existing Records -->
-        <div class="records-section">
-            <h2>Filter Attendance Records</h2>
-            <form id="filterForm" method="GET" action="{{ url_for('main.teacher_attendance') }}">
-                <label for="class_id">Class:</label>
-                <select id="class_id" name="class_id" onchange="filterAttendance(); updateStudents();" required>
-                    {% for cls in assigned_classes %}
-                        <option value="{{ cls.class_id }}" {% if cls.class_id == selected_class_id %}selected{% endif %}>
-                            {{ cls.subject }} ({{ cls.class_id }})
-                        </option>
-                    {% endfor %}
-                </select>
-
-                <label for="filter_student_id">Student:</label>
-                <select id="filter_student_id" name="student_id" onchange="filterAttendance()">
-                    {% for student_id, student_name in student_data.items() %}
-                        <option value="{{ student_id }}" {% if student_id == selected_student_id %}selected{% endif %}>
-                            {{ student_name }} ({{ student_id }})
-                        </option>
-                    {% endfor %}
-                </select>
-            </form>
-
-            <h2>Existing Attendance Records</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Class</th>
-                        <th>Student</th>
-                        <th>Date</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for record in records %}
-                    <tr>
-                        <td>{{ record.class_id }}</td>
-                        <td>{{ record.student_name }} ({{ record.student_id }})</td>
-                        <td>{{ record.date }}</td>
-                        <td>{{ record.status }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
     </div>
 </body>
 </html>
