@@ -35,11 +35,39 @@
             padding-top: 100px;
             display: flex;
             justify-content: center;
-            gap: 40px;
-            max-width: 1200px;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            max-width: 800px;
             margin: auto;
         }
-
+        .message {
+            display: none;
+            background-color: #28a745;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #007BFF;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
         .back-button {
             position: fixed;
             top: 15px;
@@ -55,7 +83,6 @@
             display: inline-block;
             z-index: 1100;
         }
-
         .back-button:hover {
             background-color: #0056b3;
         }
@@ -63,10 +90,81 @@
 </head>
 <body>
     <a href="{{ url_for('main.admin_dashboard') }}" class="back-button">&larr; Back to Dashboard</a>
-
     <header>Manage Users</header>
     <div class="content">
-        <p>Place holder</p>
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div id="updateMessage" class="message" style="display:block;">{{ messages[0] }}</div>
+        {% endif %}
+        {% endwith %}
+        <form method="POST" action="{{ url_for('main.manage_users_permissions') }}">
+            <label for="search_query">Search Users:</label>
+            <input type="text" id="search_query" name="search_query" placeholder="Enter username or email">
+            <button type="submit">Search</button>
+        </form>
+
+        {% if users %}
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Actions</th>
+            </tr>
+            {% for user in users %}
+            <tr>
+                <td>{{ user.name }}</td>
+                <td>{{ user.username }}</td>
+                <td>{{ user.email }}</td>
+                <td>{{ user.role }}</td>
+                <td>
+                    <button onclick="openModal('{{ user.username }}', '{{ user.name }}', '{{ user.email }}', '{{ user.role }}')">Update</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+        {% else %}
+        <p>No users found.</p>
+        {% endif %}
     </div>
+
+    <!-- Modal for updating user -->
+    <div id="updateModal" style="display:none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 5px; box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);">
+        <form method="POST" action="{{ url_for('main.update_user') }}">
+            <input type="hidden" id="modalUsername" name="username">
+            <label for="update_field">Select Item to Update:</label>
+            <select id="update_field" name="update_field" required>
+                <option value="password">Password</option>
+                <option value="username">Username</option>
+                <option value="email">Email</option>
+                <option value="role">Role</option>
+            </select>
+            <label for="new_value">New Value:</label>
+            <input type="text" id="new_value" name="new_value" required>
+            <button type="submit">Update</button>
+            <button type="button" onclick="closeModal()">Cancel</button>
+        </form>
+    </div>
+
+    <script>
+        function openModal(username, name, email, role) {
+            document.getElementById('modalUsername').value = username;
+            document.getElementById('updateModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('updateModal').style.display = 'none';
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            var message = document.getElementById('updateMessage');
+            if (message && message.textContent.trim() !== '') {
+                setTimeout(() => {
+                    message.style.display = 'none';
+                }, 5000);
+            }
+        });
+    </script>
 </body>
 </html>
