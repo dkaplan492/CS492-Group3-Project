@@ -85,51 +85,124 @@ def grades_get_students():
 @main.route('/get_student_grades/<student_id>', methods=['GET'])
 def get_student_grades(student_id):
     """Retrieve assignments that need grading for a student."""
-    grades = mongo.db["Grades"].find({"student_id": student_id}, {"_id": 0})
-    assignments = [{"id": g["assignment_name"], "name": g["assignment_name"], "grade": g.get("grade", "")} for g in grades]
+    grades = mongo.db["assignments_grades"].find(
+        {"student_id": student_id}, 
+        {"_id": 0, "assignment_name": 1, "assigned_date": 1, "grade": 1, "class_number": 1}
+    )
     
+    assignments = [
+        {
+            "id": g["assignment_name"],
+            "name": g["assignment_name"],
+            "assigned_date": g.get("assigned_date", ""),
+            "grade": g.get("grade", "")
+        }
+        for g in grades
+    ]
+
     return jsonify({"assignments": assignments})
 
 
 @main.route('/submit_grade', methods=['POST'])
 def submit_grade():
     """Submit or update a student's grade for an assignment."""
-    data = request.json
-    student_id = data.get('student_id')
-    assignment_name = data.get('assignment_id')
-    grade = data.get('grade')
-    
-    mongo.db["Grades"].update_one(
-        {"student_id": student_id, "assignment_name": assignment_name},
-        {"$set": {"grade": grade, "entered_date": datetime.utcnow()}},
-        upsert=True
-    )
-    return jsonify({"message": "Grade submitted successfully!"})
+    try:
+        data = request.json
+        print("[DEBUG] Received data:", data)
+
+        student_id = data.get('student_id')
+        assignment_name = data.get('assignment_name')
+        assigned_date = data.get('assigned_date')
+        grade = data.get('grade')
+
+        if not student_id or not assignment_name or not assigned_date or grade is None:
+            print("[ERROR] Missing fields:", student_id, assignment_name, assigned_date, grade)
+            return jsonify({"error": "Missing required fields"}), 400
+
+        # Convert current date to MM/DD/YYYY format for graded_date
+        formatted_graded_date = datetime.utcnow().strftime("%m/%d/%Y")
+
+        print(f"[DEBUG] Searching MongoDB for: student_id={student_id}, assignment_name={assignment_name}, assigned_date={assigned_date}")
+
+        # Fetch the actual data from MongoDB and log it
+        matching_docs = list(mongo.db["assignments_grades"].find({"student_id": student_id}))
+        print(f"[DEBUG] MongoDB Documents for student {student_id}:")
+        for doc in matching_docs:
+            print(doc)
+
+        # Check if the document exists before updating
+        existing_doc = mongo.db["assignments_grades"].find_one(
+            {
+                "student_id": student_id,
+                "assignment_name": assignment_name,
+                "assigned_date": assigned_date
+            }
+        )
+
+        if not existing_doc:
+            print("[ERROR] No matching document found in MongoDB!")
+            return jsonify({"error": "Assignment not found. Check student ID, assignment name, and assigned date."}), 400
+
+        # Update the grade
+        update_result = mongo.db["assignments_grades"].update_one(
+            {
+                "student_id": student_id,
+                "assignment_name": assignment_name,
+                "assigned_date": assigned_date  
+            },
+            {"$set": {"grade": grade, "graded_date": formatted_graded_date}},
+            upsert=False  
+        )
+
+        print("[DEBUG] MongoDB Update Result:", update_result.raw_result)
+
+        if update_result.modified_count > 0:
+            return jsonify({"message": "Grade submitted successfully!"})
+        else:
+            return jsonify({"message": "No changes made. Verify data."}), 400
+
+    except Exception as e:
+        print("[ERROR] Exception:", str(e))
+        return jsonify({"error": "Server error: " + str(e)}), 500
+
 
 @main.route('/assign_homework', methods=['POST'])
 def assign_homework():
     """Assign homework to all students in a teacher's class."""
     data = request.json
     assignment_name = data.get('assignment_name')
+    assigned_date = data.get('assigned_date')
     due_date = data.get('due_date')
     teacher_id = session.get('username')
-    
+
+    if not assignment_name or not assigned_date or not due_date:
+        return jsonify({"error": "All fields are required"}), 400
+
+    try:
+        # Ensure assigned_date is in MM/DD/YYYY format
+        assigned_date = datetime.strptime(assigned_date, "%m/%d/%Y").strftime("%m/%d/%Y")
+    except ValueError:
+        return jsonify({"error": "Invalid date format. Use MM/DD/YYYY"}), 400
+
     teacher_profile = mongo.db["Teacher Profile"].find_one({"teacher_id": teacher_id})
     if not teacher_profile:
         return jsonify({"error": "Teacher profile not found"}), 404
-    
+
     assigned_classes = teacher_profile.get("assigned_classes", [])
+    
     for cls in assigned_classes:
         class_id = cls["class_id"]
         for student_id in cls.get("students_enrolled", []):
-            mongo.db["Assignments"].insert_one({
+            mongo.db["assignments_grades"].insert_one({
                 "class_number": class_id,
                 "assignment_name": assignment_name,
+                "assigned_date": assigned_date,
                 "student_id": student_id,
-                "entered_date": datetime.utcnow(),
-                "due_date": due_date
+                "due_date": due_date,
+                "grade": None,
+                "graded_date": None
             })
-    
+
     return jsonify({"message": "Homework assigned successfully!"})
 
 
@@ -186,7 +259,7 @@ def teacher_attendance():
         if selected_class:
             student_ids = selected_class.get('students_enrolled', [])
 
-            # ✅ Auto-select first student if none is selected
+            # Auto-select first student if none is selected
             if not selected_student_id and student_ids:
                 selected_student_id = student_ids[0]
 
@@ -315,12 +388,6 @@ def admin_dashboard():
         return render_template('admin/admin_dashboard.html', name=name)
     return redirect(url_for('auth.home'))
 
-
-from flask import request, session, redirect, url_for, flash, render_template
-from werkzeug.security import generate_password_hash
-from datetime import datetime
-from bson.objectid import ObjectId
-from src import mongo
 
 @main.route('/manage_users_permissions', methods=['GET', 'POST'])
 def manage_users_permissions():

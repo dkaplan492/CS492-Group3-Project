@@ -132,6 +132,8 @@
             <h2>Assign Homework</h2>
             <label for="assignment-name">Assignment Name:</label>
             <input type="text" id="assignment-name">
+            <label for="assigned-date">Assigned Date:</label>
+            <input type="date" id="assigned-date">
             <label for="due-date">Due Date:</label>
             <input type="date" id="due-date">
             <button id="assign-homework">Assign Homework</button>
@@ -151,12 +153,18 @@
                 $('#grades-table tbody').empty();
                 if (studentId) {
                     $.getJSON(`/get_student_grades/${studentId}`, function(data) {
+                        console.log("DEBUG: Assignments Received:", data);
+
                         data.assignments.forEach(assignment => {
+                            console.log("DEBUG: Adding row for", assignment);
+                            
+                            let safeAssignmentName = assignment.name.replace(/\s+/g, '-');
+
                             let row = `<tr>
-                                <td>${assignment.assigned_date}</td>
+                                <td>${assignment.assigned_date}</td>  <!-- ✅ Ensure MM/DD/YYYY format is used -->
                                 <td>${assignment.name}</td>
-                                <td><input type='text' value='${assignment.grade}' id='grade-${assignment.id}' style='width: 50px; text-align: center;'></td>
-                                <td><button onclick='updateGrade("${studentId}", "${assignment.id}")'>Save</button></td>
+                                <td><input type='text' value='${assignment.grade || ''}' id='grade-${safeAssignmentName}' style='width: 50px; text-align: center;'></td>
+                                <td><button onclick='updateGrade("${studentId}", "${assignment.name}", "${assignment.assigned_date}")'>Save</button></td>
                             </tr>`;
                             $('#grades-table tbody').append(row);
                         });
@@ -164,28 +172,77 @@
                 }
             });
             
-            window.updateGrade = function(studentId, assignmentId) {
-                let grade = $(`#grade-${assignmentId}`).val();
-                $.post("/submit_grade", {
+            window.updateGrade = function(studentId, assignmentName, assignedDate) {
+                let safeAssignmentName = assignmentName.replace(/\s+/g, '-');  
+                let gradeInput = $(`#grade-${safeAssignmentName}`);
+
+                if (!gradeInput.length) {
+                    alert("Error: Grade input field not found!");
+                    console.log("ERROR: Missing grade input for", assignmentName, `#grade-${safeAssignmentName}`);
+                    return;
+                }
+
+                let grade = gradeInput.val().trim();
+
+                if (!grade) {
+                    alert("Grade cannot be empty!");
+                    return;
+                }
+
+                console.log("[DEBUG] Submitting grade with:", {
                     student_id: studentId,
-                    assignment_id: assignmentId,
+                    assignment_name: assignmentName,
+                    assigned_date: assignedDate,
                     grade: grade
-                }, function(response) {
-                    alert(response.message);
+                });
+
+                $.ajax({
+                    url: "/submit_grade",
+                    type: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify({
+                        student_id: studentId,
+                        assignment_name: assignmentName,
+                        assigned_date: assignedDate,
+                        grade: grade
+                    }),
+                    success: function(response) {
+                        console.log("Success response:", response);
+                        alert(response.message);
+                    },
+                    error: function(xhr) {
+                        console.log("AJAX Error:", xhr.responseText);
+                        alert("Error submitting grade: " + xhr.responseText);
+                    }
                 });
             };
             
             $('#assign-homework').click(function() {
                 let assignmentName = $('#assignment-name').val();
+                let assignedDate = $('#assigned-date').val();
                 let dueDate = $('#due-date').val();
-                if (assignmentName && dueDate) {
-                    $.post("/assign_homework", {
-                        assignment_name: assignmentName,
-                        due_date: dueDate
-                    }, function(response) {
-                        alert(response.message);
-                    });
+
+                if (!assignmentName || !assignedDate || !dueDate) {
+                    alert("All fields are required!");
+                    return;
                 }
+
+                // Convert assignedDate to MM/DD/YYYY format
+                let formattedAssignedDate = new Date(assignedDate).toLocaleDateString('en-US');
+
+                $.ajax({
+                    url: "/assign_homework",
+                    type: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify({
+                        assignment_name: assignmentName,
+                        assigned_date: formattedAssignedDate,
+                        due_date: dueDate
+                    }),
+                    success: function(response) {
+                        alert(response.message);
+                    }
+                });
             });
         });
     </script>
