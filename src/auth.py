@@ -6,9 +6,9 @@ auth = Blueprint('auth', __name__)
 
 @auth.route('/')
 def home():
-    """Welcome homepage."""
-    return render_template('home.html', active_tab='home')
-
+    # Use the active_tab parameter from the query string; default to 'home'
+    active_tab = request.args.get('active_tab', 'home')
+    return render_template('home.html', active_tab=active_tab)
 
 @auth.route('/login', methods=['POST'])
 def login():
@@ -17,7 +17,14 @@ def login():
     password = request.form.get('password')
     role = request.form.get('role')
 
-    BASE_URL = current_app.config['BASE_URL']
+    # Map form roles to the corresponding tab id in home.html
+    role_to_tab = {
+        "Student": "students",
+        "Parent": "parents",
+        "Teacher": "teachers",
+        "Administrator": "administrators"
+    }
+    active_tab = role_to_tab.get(role, "home")
 
     # Query the user from the MongoDB collection
     user = mongo.db.users.find_one({"username": username})
@@ -29,65 +36,31 @@ def login():
             session['name'] = user.get('name', role.capitalize())
             print(f"[DEBUG] Login successful - Username: {user['username']}, Role: {user['role']}")
 
-            # Redirect to the appropriate dashboard based on role
-        if role == 'Student':
-            return redirect(url_for('main.student_dashboard'))
-        
-        elif role == 'Parent':
-            return redirect(url_for('main.parent_dashboard'))
-        
-        elif role == 'Teacher':
-            teacher_profile = mongo.db["Teacher Profile"].find_one({"teacher_id": username})
-
-            session['teacher_profile'] = {
-                "teacher_id": teacher_profile["teacher_id"],
-                "name": teacher_profile["name"],
-                "assigned_classes": teacher_profile["assigned_classes"]
+            if role == 'Student':
+                return redirect(url_for('main.student_dashboard'))
+            elif role == 'Parent':
+                return redirect(url_for('main.parent_dashboard'))
+            elif role == 'Teacher':
+                teacher_profile = mongo.db["Teacher Profile"].find_one({"teacher_id": username})
+                session['teacher_profile'] = {
+                    "teacher_id": teacher_profile["teacher_id"],
+                    "name": teacher_profile["name"],
+                    "assigned_classes": teacher_profile["assigned_classes"]
                 }
-            return redirect(url_for('main.teacher_dashboard'))
-        
-        elif role == 'Administrator':
-            return redirect(url_for('main.admin_dashboard'))
-        
+                return redirect(url_for('main.teacher_dashboard'))
+            elif role == 'Administrator':
+                return redirect(url_for('main.admin_dashboard'))
+            else:
+                flash("Incorrect credentials. Please try again.", category="error")
         else:
             print(f"[DEBUG] Role mismatch - Username: {username}")
-            flash("Invalid username or password.", category="error")
+            flash("Incorrect credentials. Please try again.", category="error")
     else:
         print(f"[DEBUG] Invalid login - Username: {username}")
-        flash("Invalid username or password.", category="error")
+        flash("Incorrect credentials. Please try again.", category="error")
 
-    
-    return redirect(url_for('auth.home'))
-
-
-@auth.route('/reset_password', methods=['GET', 'POST'])
-def reset_password():
-    """Handle password reset requests."""
-    if request.method == 'POST':
-        username = request.form.get('username')
-        email = request.form.get('email')
-        role = request.form.get('role')
-
-        # Query the user from the MongoDB collection
-        user = mongo.db.users.find_one({"username": username, "role": role})
-
-        if user and user['email'] == email:
-            # Handle password reset logic
-            print(f"[DEBUG] Password reset initiated for {username}, Role: {role}")
-            flash(f"A password reset link has been sent to {email}.")
-            return redirect(url_for('auth.home'))
-        else:
-            print(f"[DEBUG] Invalid reset attempt for {username}, Role: {role}")
-            flash("Invalid username, email, or role.")
-            return render_template('reset_password.html')
-
-    return render_template('reset_password.html')
-
-
-@auth.route('/reset_password_page')
-def reset_password_page():
-    """Redirect to the reset password page."""
-    return render_template('reset_password.html')
+    # Redirect back to the home page with the current tab active so the error message shows only there
+    return redirect(url_for('auth.home', active_tab=active_tab))
 
 
 @auth.route('/logout')
@@ -95,6 +68,4 @@ def logout():
     """Logout route for all users."""
     print(f"[DEBUG] Logging out - Username: {session.get('username', 'Unknown')}")
     session.clear()
-    flash('You have been logged out.')
     return redirect(url_for('auth.home'))
-
