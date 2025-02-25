@@ -1,5 +1,6 @@
 from flask import jsonify, Blueprint, render_template, request, session, redirect, url_for, flash, current_app
 from bson.objectid import ObjectId
+from werkzeug.security import generate_password_hash
 from bson.json_util import dumps
 from datetime import datetime, timedelta
 from src import mongo
@@ -315,18 +316,82 @@ def admin_dashboard():
     return redirect(url_for('auth.home'))
 
 
-@main.route('/manage_users_permissions')
-def manage_users_permissions():
-    if verify_role('Administrator'):
-        return render_template('admin/manage_users_permissions.html')
-    return redirect(url_for('auth.home'))
+from flask import request, session, redirect, url_for, flash, render_template
+from werkzeug.security import generate_password_hash
+from datetime import datetime
+from bson.objectid import ObjectId
+from src import mongo
 
+@main.route('/manage_users_permissions', methods=['GET', 'POST'])
+def manage_users_permissions():
+    if 'role' not in session or session['role'] != 'Administrator':
+        flash("Access denied. Only administrators can manage users.", "error")
+        return redirect(url_for('auth.home'))
+
+    users = []
+    if request.method == 'POST':
+        search_query = request.form.get('search_query')
+        if search_query:
+            users = list(mongo.db.users.find({
+                "$or": [
+                    {"username": {'$regex': search_query, '$options': 'i'}},
+                    {"email": {'$regex': search_query, '$options': 'i'}}
+                ]
+            }))
+    
+    return render_template('admin/manage_users_permissions.html', users=users)
+
+@main.route('/update_user', methods=['POST'])
+def update_user():
+    if 'role' not in session or session['role'] != 'Administrator':
+        flash("Access denied.", "error")
+        return redirect(url_for('auth.home'))
+    
+    username = request.form.get('username')
+    new_value = request.form.get('new_value')
+    update_field = request.form.get('update_field')
+    admin_username = session.get('username')
+    
+    if not username or not new_value or not update_field:
+        flash("All fields are required.", "error")
+        return redirect(url_for('main.manage_users_permissions'))
+    
+    user = mongo.db.users.find_one({"username": username})
+    if not user:
+        flash("User not found.", "error")
+        return redirect(url_for('main.manage_users_permissions'))
+    
+    previous_value = "hashed" if update_field == "password" else user.get(update_field, "Unknown")
+    
+    if update_field == "password":
+        new_value = generate_password_hash(new_value)
+    
+    mongo.db.users.update_one({"username": username}, {"$set": {update_field: new_value}})
+    
+    audit_entry = {
+        "_id": ObjectId(),
+        "admin_user": admin_username,
+        "users_name": user.get("name"),
+        "username": user.get("username"),
+        "email": user.get("email"),
+        "user_role": user.get("role"),
+        "updated_item": update_field,
+        "previous_value": previous_value,
+        "date_time": datetime.now().strftime('%m/%d/%Y %I:%M %p')
+    }
+    mongo.db.audit_log.insert_one(audit_entry)
+    
+    flash("User information updated successfully.", "success")
+    return redirect(url_for('main.manage_users_permissions'))
 
 @main.route('/audit_log')
 def audit_log():
-    if verify_role('Administrator'):
-        return render_template('admin/audit_log.html')
-    return redirect(url_for('auth.home'))
+    if 'role' not in session or session['role'] != 'Administrator':
+        flash("Access denied.", "error")
+        return redirect(url_for('auth.home'))
+
+    audit_logs = list(mongo.db.audit_log.find({}))
+    return render_template('admin/audit_log.html', audit_logs=audit_logs)
 
 
 # Parent Dashboard

@@ -39,7 +39,6 @@
             max-width: 1200px;
             margin: auto;
         }
-
         .back-button {
             position: fixed;
             top: 15px;
@@ -55,18 +54,61 @@
             display: inline-block;
             z-index: 1100;
         }
-
         .back-button:hover {
             background-color: #0056b3;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #007BFF;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
         }
     </style>
 </head>
 <body>
-    <a href="{{ url_for('main.audit_log') }}" class="back-button">&larr; Back to Dashboard</a>
-
+    <a href="{{ url_for('main.admin_dashboard') }}" class="back-button">&larr; Back to Dashboard</a>
     <header>Audit Log</header>
     <div class="content">
-        <p>Placeholder</p>
+        {% if audit_logs %}
+        <table>
+            <tr>
+                <th>Admin User</th>
+                <th>Updated User's Name</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Updated Item</th>
+                <th>Previous Value</th>
+                <th>Date & Time</th>
+            </tr>
+            {% for log in audit_logs %}
+            <tr>
+                <td>{{ log.admin_user }}</td>
+                <td>{{ log.users_name }}</td>
+                <td>{{ log.username }}</td>
+                <td>{{ log.email }}</td>
+                <td>{{ log.user_role }}</td>
+                <td>{{ log.updated_item }}</td>
+                <td>{{ log.previous_value }}</td>
+                <td>{{ log.date_time }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        {% else %}
+        <p>No audit logs found.</p>
+        {% endif %}
     </div>
 </body>
 </html>
