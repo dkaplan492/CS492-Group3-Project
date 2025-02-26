@@ -142,6 +142,7 @@
             <tr>
               <th>Assigned Date</th>
               <th>Assignment Name</th>
+              <th>Due Date</th>
               <th>Grade</th>
               <th>Action</th>
             </tr>
@@ -193,7 +194,7 @@
           $.getJSON(`/get_student_grades/${studentId}`, function(data) {
             console.log("DEBUG: Assignments Received:", data);
             if (data.assignments.length === 0) {
-              $('#grades-table tbody').append(`<tr><td colspan="4" style="text-align:center;">No assignments found.</td></tr>`);
+              $('#grades-table tbody').append(`<tr><td colspan="5" style="text-align:center;">No assignments found.</td></tr>`);
               return;
             }
             data.assignments.forEach(assignment => {
@@ -201,6 +202,7 @@
               let row = `<tr>
                 <td>${assignment.assigned_date}</td>
                 <td>${assignment.name}</td>
+                <td>${assignment.due_date || 'N/A'}</td>
                 <td><input type='text' value='${assignment.grade || ''}' id='grade-${safeAssignmentName}' style='width: 50px; text-align: center;'></td>
                 <td><button onclick='updateGrade("${studentId}", "${assignment.name}", "${assignment.assigned_date}")'>Save</button></td>
               </tr>`;

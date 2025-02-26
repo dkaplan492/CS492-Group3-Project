@@ -87,19 +87,35 @@ def get_student_grades(student_id):
     """Retrieve assignments that need grading for a student."""
     grades = mongo.db["assignments_grades"].find(
         {"student_id": student_id}, 
-        {"_id": 0, "assignment_name": 1, "assigned_date": 1, "grade": 1, "class_number": 1}
+        {"_id": 0, "assignment_name": 1, "assigned_date": 1, "grade": 1, "class_number": 1, "due_date": 1}
     )
-    
+
+    def format_date(date_str):
+        if not date_str:
+            return ""
+        try:
+            # Attempt to parse assuming it's already in MM/DD/YYYY
+            dt = datetime.strptime(date_str, "%m/%d/%Y")
+            return dt.strftime("%m/%d/%Y")
+        except ValueError:
+            try:
+                # Otherwise, try YYYY-MM-DD and convert it to MM/DD/YYYY
+                dt = datetime.strptime(date_str, "%Y-%m-%d")
+                return dt.strftime("%m/%d/%Y")
+            except ValueError:
+                # If parsing fails, return the original string
+                return date_str
+
     assignments = [
         {
             "id": g["assignment_name"],
             "name": g["assignment_name"],
-            "assigned_date": g.get("assigned_date", ""),
+            "assigned_date": format_date(g.get("assigned_date", "")),
+            "due_date": format_date(g.get("due_date", "")),
             "grade": g.get("grade", "")
         }
         for g in grades
     ]
-
     return jsonify({"assignments": assignments})
 
 
@@ -423,25 +439,33 @@ def update_user():
         flash("All fields are required.", "error")
         return redirect(url_for('main.manage_users_permissions'))
     
-    user = mongo.db.users.find_one({"username": username})
-    if not user:
+    # Get the current user record before update.
+    user_before = mongo.db.users.find_one({"username": username})
+    if not user_before:
         flash("User not found.", "error")
         return redirect(url_for('main.manage_users_permissions'))
     
-    previous_value = "hashed" if update_field == "password" else user.get(update_field, "Unknown")
+    # Store the previous value of the field being updated.
+    previous_value = "hashed" if update_field == "password" else user_before.get(update_field, "Unknown")
     
     if update_field == "password":
         new_value = generate_password_hash(new_value)
     
+    # Perform the update.
     mongo.db.users.update_one({"username": username}, {"$set": {update_field: new_value}})
     
+    # If username was updated, query using the new value.
+    query = {"username": new_value} if update_field == "username" else {"username": username}
+    updated_user = mongo.db.users.find_one(query)
+    
+    # Create the audit log entry using the updated values.
     audit_entry = {
         "_id": ObjectId(),
         "admin_user": admin_username,
-        "users_name": user.get("name"),
-        "username": user.get("username"),
-        "email": user.get("email"),
-        "user_role": user.get("role"),
+        "users_name": updated_user.get("name"),
+        "username": updated_user.get("username"),
+        "email": updated_user.get("email"),
+        "user_role": updated_user.get("role"),
         "updated_item": update_field,
         "previous_value": previous_value,
         "date_time": datetime.now().strftime('%m/%d/%Y %I:%M %p')
@@ -450,6 +474,7 @@ def update_user():
     
     flash("User information updated successfully.", "success")
     return redirect(url_for('main.manage_users_permissions'))
+
 
 @main.route('/audit_log')
 def audit_log():
