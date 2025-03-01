@@ -8,6 +8,16 @@ import uuid
 
 main = Blueprint('main', __name__)
 
+# Database connection
+db = mongo.db
+
+bus_schedule_collection = db["Bus_Schedule"]
+assignments_collection = db["Assignments"]
+attendance_collection = db["Attendance"]
+students_collection = db["Student_Profile"]
+parents_collection = db["Parent_Profile"]
+
+
 # Helper function to check role
 def verify_role(required_role):
     """Verify if the logged-in user has the required role."""
@@ -26,18 +36,18 @@ def student_dashboard():
     return redirect(url_for('auth.home'))
 
 
-@main.route('/student_assignments_homework')
+@main.route("/student_assignments_homework")
 def student_assignments_homework():
-    if verify_role('Student'):
-        return render_template('student/student_assignments_homework.html')
-    return redirect(url_for('auth.home'))
+    student_id = session.get('student_id')
+    assignments = list(assignments_collection.find({"student_id": student_id}))
+    return render_template("student/student_assignments_homework.html", assignments=assignments)
 
 
-@main.route('/student_bus_schedule')
+@main.route("/student_bus_schedule")
 def student_bus_schedule():
-    if verify_role('Student'):
-        return render_template('student/student_bus_schedule.html')
-    return redirect(url_for('auth.home'))
+    student_id = session.get('student_id')
+    bus_schedule = list(bus_schedule_collection.find({"student_id": student_id}))
+    return render_template("student/student_bus_schedule.html", bus_schedule=bus_schedule)
 
 
 @main.route('/student_classes_and_grades')
@@ -495,18 +505,37 @@ def parent_dashboard():
     return redirect(url_for('auth.home'))
 
 
-@main.route('/parent_attendance_records')
+def get_student_id(parent_id):
+    """Helper function to get a student ID from a parent's ID."""
+    parent = parents_collection.find_one({"parent_id": parent_id})
+    return parent.get("student_id") if parent else None
+
+
+@main.route("/parent_attendance_records")
 def parent_attendance_records():
-    if verify_role('Parent'):
-        return render_template('parent/parent_attendance_records.html')
-    return redirect(url_for('auth.home'))
+    parent_id = session.get('parent_id')
+    student_id = get_student_id(parent_id)
+    if not student_id:
+        flash("Student not found for this parent!", "danger")
+
+        return render_template("parent/parent_attendance_records.html", attendance_records=[])
+    
+    attendance_records = list(attendance_collection.find({"student_id": student_id}))
+    return render_template("parent/parent_attendance_records.html", attendance_records=attendance_records)
 
 
-@main.route('/parent_bus_schedule')
+@main.route("/parent_bus_schedule")
 def parent_bus_schedule():
-    if verify_role('Parent'):
-        return render_template('parent/parent_bus_schedule.html')
-    return redirect(url_for('auth.home'))
+    parent_id = session.get('parent_id')
+    student_id = get_student_id(parent_id)
+    if not student_id:
+        flash("Student not found for this parent!", "danger")
+        
+        return render_template("parent/parent_bus_schedule.html", bus_schedule=[])
+    
+    bus_schedule = list(bus_schedule_collection.find({"student_id": student_id}))
+    return render_template("parent/parent_bus_schedule.html", bus_schedule=bus_schedule)
+
 
 
 @main.route('/parent_view_class_schedule')
@@ -521,60 +550,3 @@ def parent_view_student_grades():
     if verify_role('Parent'):
         return render_template('parent/parent_view_student_grades.html')
     return redirect(url_for('auth.home'))
-from flask import Flask, render_template, request, redirect, url_for, flash
-from pymongo import MongoClient
-
-app = Flask(__name__)
-app.secret_key = "supersecretkey"
-
-# Database connection
-client = MongoClient("mongodb://localhost:27017/")  # Update if needed
-db = client["school_management"]
-
-bus_schedule_collection = db["Bus_Schedule"]
-assignments_collection = db["Assignments"]
-attendance_collection = db["Attendance"]
-students_collection = db["Student_Profile"]
-parents_collection = db["Parent_Profile"]
-
-def get_student_id(parent_id):
-    """Helper function to get a student ID from a parent's ID."""
-    parent = parents_collection.find_one({"parent_id": parent_id})
-    return parent.get("student_id") if parent else None
-
-# Flask Routes
-
-@app.route("/student_bus_schedule")
-def student_bus_schedule():
-    student_id = "sample_student"  # Replace with session data
-    bus_schedule = list(bus_schedule_collection.find({"student_id": student_id}))
-    return render_template("student/student_bus_schedule.html", bus_schedule=bus_schedule)
-
-@app.route("/student_assignments_homework")
-def student_assignments_homework():
-    student_id = "sample_student"  # Replace with session data
-    assignments = list(assignments_collection.find({"student_id": student_id}))
-    return render_template("student/student_assignments_homework.html", assignments=assignments)
-
-@app.route("/parent_bus_schedule")
-def parent_bus_schedule():
-    parent_id = "sample_parent"  # Replace with session data
-    student_id = get_student_id(parent_id)
-    if not student_id:
-        flash("Student not found for this parent!", "danger")
-        return redirect(url_for("home"))
-    bus_schedule = list(bus_schedule_collection.find({"student_id": student_id}))
-    return render_template("parent/parent_bus_schedule.html", bus_schedule=bus_schedule)
-
-@app.route("/parent_attendance_records")
-def parent_attendance_records():
-    parent_id = "sample_parent"  # Replace with session data
-    student_id = get_student_id(parent_id)
-    if not student_id:
-        flash("Student not found for this parent!", "danger")
-        return redirect(url_for("home"))
-    attendance_records = list(attendance_collection.find({"student_id": student_id}))
-    return render_template("parent/parent_attendance_records.html", attendance_records=attendance_records)
-
-if __name__ == "__main__":
-    app.run(debug=True)
