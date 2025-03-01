@@ -96,11 +96,13 @@
     <div class="content">
         <a href="/teacher_dashboard" class="back-button">← Back to Dashboard</a>
         <div class="controls">
+            <!--Formats the dropdown to start without input-->
             <label for="student-select">Select Student:</label>
             <select id="student-select">
                 <option value="">-- Select a Student --</option>
             </select>
         </div>
+        <!--Formats the table headers-->
         <div class="table-container">
             <table id="student-profile">
                 <tr><th>Student ID</th><td id="student-id"></td></tr>
@@ -117,6 +119,7 @@
         </div>
     </div>
     <script>
+        // Populates the student name instead of student ID in dropdown field
         $(document).ready(function() {
             $.getJSON("/profile_get_students", function(data) {
                 let students = data.students;
@@ -128,9 +131,10 @@
             $('#student-select').change(function() {
                 let studentId = $(this).val();
                 
-                // Clear existing data
+                // Clear existing data so that it does not stay populated
                 $('#student-id, #first-name, #last-name, #dob, #grade-level, #email, #phone, #address, #emergency-contacts, #bus-schedule').text('');
-    
+                
+                // Populates the table with the appropriate information based on student from dropdown menu
                 if (studentId) {
                     $.getJSON(`/get_student_profile/${studentId}`, function(data) {
                         $('#student-id').text(data.student_id || '');

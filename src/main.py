@@ -355,50 +355,50 @@ def teacher_student_profiles():
 
 @main.route('/profile_get_students', methods=['GET'])
 def profile_get_students():
-    """Fetch students assigned to the logged-in teacher."""
+    # Matches signed-in Teacher Username to teacher_id in Teacher Profile collection
     teacher_id = session.get('username')
     teacher_profile = mongo.db["Teacher Profile"].find_one({"teacher_id": teacher_id})
     
     if not teacher_profile:
         return jsonify({"error": "Teacher profile not found"}), 404
     
+    # Retrieves assigned_classes from the Teacher Profile Collection
     assigned_classes = teacher_profile.get("assigned_classes", [])
-    student_ids = [student for cls in assigned_classes for student in cls.get("students_enrolled", [])]
+    student_ids = [student for cls in assigned_classes for student in cls.get("students_enrolled", [])] # Obtains students enrolled from the students_enrolled array
     
+    # Matches students enrolled to student_id in the Student Profile collection
     students = mongo.db["Student Profile"].find({"student_id": {"$in": student_ids}}, 
-                                                  {"student_id": 1, "first_name": 1, "last_name": 1, "_id": 0})
+                                                  {"student_id": 1, "first_name": 1, "last_name": 1, "_id": 0}) # Gets the student ID, first name, and last name
     student_list = [{"id": s["student_id"], "name": f"{s['first_name']} {s['last_name']}"} for s in students]
     
     return jsonify({"students": student_list})
 
-
+# Retrieves the student profile information from the Student Profile collection
 @main.route('/get_student_profile/<student_id>', methods=['GET'])
 def get_student_profile(student_id):
-    """Retrieve detailed student profile based on student_id."""
+    # Matches student ID obtained to the student_id in the Student Profile collection
     student = mongo.db["Student Profile"].find_one({"student_id": student_id}, {"_id": 0})
     
     if not student:
         return jsonify({"error": "Student not found"}), 404
-    
-    from datetime import datetime
 
-    # Format Date of Birth
+    # Format Date of Birth from Student Profile collection as MM/DD/YYYY
     if "date_of_birth" in student:
         student["date_of_birth"] = datetime.strptime(student["date_of_birth"], "%Y-%m-%d").strftime("%m-%d-%Y")
 
-    # Populate Emergency Contact
+    # Populate Emergency Contact from Student Profile collection
     if "emergency_contacts" in student:
         for contact in student["emergency_contacts"]:
             if "relation" not in contact or not contact["relation"]:
                 contact["relation"] = "Unknown"
 
-    # Retrieve Bus Schedule from Bus Routes Collection
+    # Retrieve Bus Schedule from Bus Routes Collection student array
     bus_info = mongo.db["Bus Routes"].find_one({"students": student_id}, {"_id": 0})
     
     if bus_info:
         stops = bus_info.get("stops", [])
         student["bus_schedule"] = "<br>".join(
-            [f"Stop: {stop['stop_name']}, Pickup: {stop['pickup_time']}, Dropoff: {stop['dropoff_time']}" for stop in stops]
+            [f"Stop: {stop['stop_name']}, Pickup: {stop['pickup_time']}, Dropoff: {stop['dropoff_time']}" for stop in stops] # retrieves stops, pickup, and drop off
         )
     else:
         student["bus_schedule"] = "No bus schedule available"
