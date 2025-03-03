@@ -3,6 +3,7 @@
 <head>
     <title>School Management System</title>
     <style>
+        /*General Formatting*/
         body {
             font-family: Arial, sans-serif;
             margin: 0;
@@ -19,7 +20,8 @@
             font-size: 1.8em;
             font-weight: bold;
         }
-
+        
+        /*Tab formatting for homepage*/
         .tabs {
             display: flex;
             justify-content: center;
@@ -64,6 +66,7 @@
             text-align: center;
         }
 
+        /*Login Form Formatting*/
         form {
             margin-top: 1em;
             text-align: center;
@@ -118,14 +121,14 @@
         <button class="tab-link" onclick="openTab(event, 'administrators')">Administrators</button>
     </div>
 
-    <!-- Include Tab Contents -->
+    <!-- Include Tab Contents from html files -->
     {% include "tabs/home_tab.html" %}
     {% include "tabs/student_tab.html" %}
     {% include "tabs/parent_tab.html" %}
     {% include "tabs/teacher_tab.html" %}
     {% include "tabs/administrator_tab.html" %}
 
-    <!-- JavaScript for Tabs -->
+    <!-- JavaScript for Tabs functionality -->
     <script>
         function openTab(event, tabName) {
             // Hide all tab contents

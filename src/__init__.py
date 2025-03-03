@@ -13,13 +13,13 @@ def create_app():
     app = Flask(__name__)
 
     # Configure the MongoDB URI (from environment variable for security)
-    app.config['MONGO_URI'] = os.getenv('MONGO_URI')  # Store MongoDB URI in a .env file
+    app.config['MONGO_URI'] = os.getenv('MONGO_URI')
     app.secret_key = os.getenv('SECRET_KEY', 'your_secret_key')  # Load SECRET_KEY from .env
 
     # Initialize MongoDB
     mongo.init_app(app)
 
-    # Load BASE_URL from environment (useful for API calls)
+    # Load BASE_URL from environment (for Render hosting)
     app.config['BASE_URL'] = os.getenv('BASE_URL', 'http://localhost:5000')
 
     print(f"MONGO_URI: {app.config.get('MONGO_URI')}")

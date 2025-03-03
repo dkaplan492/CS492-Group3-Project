@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/static/styles.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
+        /*Main content styling*/
         body {
             font-family: Arial, sans-serif;
             background-color: #d9eaf6;
@@ -39,6 +40,8 @@
             max-width: 1200px;
             margin: auto;
         }
+
+        /*Formatting for Back to Dashboard button*/
         .back-button {
             position: fixed;
             top: 15px;
@@ -57,6 +60,8 @@
         .back-button:hover {
             background-color: #0056b3;
         }
+
+        /*Formatting for table details*/
         table {
             width: 100%;
             border-collapse: collapse;
@@ -80,6 +85,7 @@
 <body>
     <a href="{{ url_for('main.admin_dashboard') }}" class="back-button">&larr; Back to Dashboard</a>
     <header>Audit Log</header>
+    <!-- Formats table headers and loads table contents from audit_log collection -->
     <div class="content">
         {% if audit_logs %}
         <table>
