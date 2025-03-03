@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="/static/styles.css">
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <style>
+    /*Main content styling*/
     body {
       font-family: Arial, sans-serif;
       background-color: #d9eaf6;
@@ -30,6 +31,8 @@
       margin: 0;
       box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
     }
+
+    /*Styling for Back to Dashboard button*/
     .back-button {
       position: fixed;
       top: 15px;
@@ -47,7 +50,8 @@
     .back-button:hover {
       background-color: #0056b3;
     }
-    /* Flash message styling (matches manage_users_permissions.html) */
+
+    /*Flash message styling*/
     .message {
       display: none;
       background-color: #28a745;
@@ -68,7 +72,8 @@
       max-width: 1200px;
       margin: auto;
     }
-    /* Container for the two side-by-side sections */
+
+    /*Container for side-by-side tables*/
     .sections-container {
       display: flex;
       gap: 40px;
@@ -178,7 +183,7 @@
     }
 
     $(document).ready(function() {
-      // Populate student select dropdown
+      // Populate student select dropdown menu
       $.getJSON("/grades_get_students", function(data) {
         let students = data.students;
         students.forEach(student => {
@@ -212,27 +217,27 @@
         }
       });
 
-      // Function to update a student's grade using AJAX
+      // Function to update a student's grade using AJAX to prevent full page reload
       window.updateGrade = function(studentId, assignmentName, assignedDate) {
         let safeAssignmentName = assignmentName.replace(/\s+/g, '-');
         let gradeInput = $(`#grade-${safeAssignmentName}`);
         if (!gradeInput.length) {
-          showMessage("Error: Grade input field not found!", true);
-          console.log("ERROR: Missing grade input for", assignmentName, `#grade-${safeAssignmentName}`);
+          showMessage("Error: Grade input field not found!", true); // popup message for error
+          console.log("ERROR: Missing grade input for", assignmentName, `#grade-${safeAssignmentName}`); // Prints error to console for debugging
           return;
         }
         let grade = gradeInput.val().trim();
         if (!grade) {
-          showMessage("Grade cannot be empty!", true);
+          showMessage("Grade cannot be empty!", true); // popup message for error
           return;
         }
-        console.log("[DEBUG] Submitting grade with:", {
+        console.log("[DEBUG] Submitting grade with:", { // prints error to console for debugging
           student_id: studentId,
           assignment_name: assignmentName,
           assigned_date: assignedDate,
           grade: grade
         });
-        $.ajax({
+        $.ajax({ // prevents page reload after grade update is submitted
           url: "/submit_grade",
           type: "POST",
           contentType: "application/json",
@@ -243,11 +248,11 @@
             grade: grade
           }),
           success: function(response) {
-            console.log("Success response:", response);
+            console.log("Success response:", response); // success submission message
             showMessage(response.message);
           },
           error: function(xhr) {
-            console.log("AJAX Error:", xhr.responseText);
+            console.log("AJAX Error:", xhr.responseText); // console error for debugging
             showMessage("Error submitting grade: " + xhr.responseText, true);
           }
         });
@@ -262,7 +267,7 @@
           showMessage("All fields are required!", true);
           return;
         }
-        // Convert assignedDate to MM/DD/YYYY format
+        // Convert assigned_date for assignment entry to MM/DD/YYYY format
         let formattedAssignedDate = new Date(assignedDate).toLocaleDateString('en-US');
         $.ajax({
           url: "/assign_homework",

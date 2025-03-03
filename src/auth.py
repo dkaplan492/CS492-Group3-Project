@@ -10,9 +10,9 @@ def home():
     active_tab = request.args.get('active_tab', 'home')
     return render_template('home.html', active_tab=active_tab)
 
+# Login route with role validation
 @auth.route('/login', methods=['POST'])
 def login():
-    """Login route with role validation."""
     username = request.form.get('username')
     password = request.form.get('password')
     role = request.form.get('role')
@@ -26,7 +26,7 @@ def login():
     }
     active_tab = role_to_tab.get(role, "home")
 
-    # Query the user from the MongoDB collection
+    # Query the user from the MongoDB users collection
     user = mongo.db.users.find_one({"username": username})
 
     if user and check_password_hash(user['password'], password):
@@ -34,8 +34,9 @@ def login():
             session['username'] = user['username']
             session['role'] = user['role']
             session['name'] = user.get('name', role.capitalize())
-            print(f"[DEBUG] Login successful - Username: {user['username']}, Role: {user['role']}")
+            print(f"[DEBUG] Login successful - Username: {user['username']}, Role: {user['role']}") # Debugging output for error checking
 
+            # Redirect to appropriate dashboard depending on user role
             if role == 'Student':
                 return redirect(url_for('main.student_dashboard'))
             elif role == 'Parent':
@@ -51,7 +52,7 @@ def login():
             elif role == 'Administrator':
                 return redirect(url_for('main.admin_dashboard'))
             else:
-                flash("Incorrect credentials. Please try again.", category="error")
+                flash("Incorrect credentials. Please try again.", category="error") # Error message on tab if credentials do not match role, or username/password do not match
         else:
             print(f"[DEBUG] Role mismatch - Username: {username}")
             flash("Incorrect credentials. Please try again.", category="error")
@@ -62,7 +63,7 @@ def login():
     # Redirect back to the home page with the current tab active so the error message shows only there
     return redirect(url_for('auth.home', active_tab=active_tab))
 
-
+# Logout route
 @auth.route('/logout')
 def logout():
     """Logout route for all users."""
