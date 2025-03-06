@@ -8,19 +8,9 @@ import uuid
 
 main = Blueprint('main', __name__)
 
-# Database connection
-db = mongo.db
-
-# Defined database collections
-bus_schedule_collection = db["Bus_Schedule"]
-assignments_collection = db["Assignments"]
-attendance_collection = db["Attendance"]
-students_collection = db["Student_Profile"]
-parents_collection = db["Parent_Profile"]
-
-
-# Helper function to verify user role
+# Helper function to check role
 def verify_role(required_role):
+    """Verify if the logged-in user has the required role."""
     if 'role' in session and session['role'] == required_role:
         return True
     flash(f"Incorrect User: You must be a {required_role} to access this page.", "error")
@@ -36,25 +26,167 @@ def student_dashboard():
     return redirect(url_for('auth.home'))
 
 # Student Assignments & Homework
-@main.route("/student_assignments_homework")
+@main.route('/student_assignments_homework')
 def student_assignments_homework():
-    student_id = session.get('student_id')
-    assignments = list(assignments_collection.find({"student_id": student_id}))
-    return render_template("student/student_assignments_homework.html", assignments=assignments)
-
-# Student Bus Schedule
-@main.route("/student_bus_schedule")
-def student_bus_schedule():
-    student_id = session.get('student_id')
-    bus_schedule = list(bus_schedule_collection.find({"student_id": student_id}))
-    return render_template("student/student_bus_schedule.html", bus_schedule=bus_schedule)
-
-# Student class schedule
-@main.route('/student_classes_and_grades')
-def student_classes_and_grades():
     if verify_role('Student'):
-        return render_template('student/student_classes_and_grades.html')
+        return render_template('student/student_assignments_homework.html')
     return redirect(url_for('auth.home'))
+
+
+@main.route('/api/student_classes', methods=['GET'])
+def api_student_classes():
+    # The logged-in student's username is assumed to be their student_id.
+    student_id = session.get('username')
+    if not student_id:
+        return jsonify({"error": "User not logged in"}), 401
+
+    student = mongo.db["Student Profile"].find_one(
+        {"student_id": student_id},
+        {"enrolled_classes": 1, "_id": 0}
+    )
+    if not student:
+        return jsonify({"error": "Student profile not found"}), 404
+
+    enrolled = student.get("enrolled_classes", [])
+    class_list = [{"id": c.get("class_id"), "subject": c.get("subject", "")} for c in enrolled]
+    return jsonify({"classes": class_list})
+
+
+@main.route('/api/student_assignments_homework', methods=['GET'])
+def api_student_assignments_homework():
+    student_id = session.get('username')
+    if not student_id:
+        return jsonify({"error": "User not logged in"}), 401
+
+    class_id = request.args.get('class_id')
+    if not class_id:
+        return jsonify({"error": "Missing class_id"}), 400
+
+    # Query the assignments_grades collection for assignments for the student and class.
+    assignments = list(mongo.db["assignments_grades"].find(
+        {"student_id": student_id, "class_number": class_id},
+        {"assignment_name": 1, "assigned_date": 1, "due_date": 1, "grade": 1, "graded_date": 1, "_id": 0}
+    ))
+
+    graded_assignments = []
+    upcoming_assignments = []
+    now_date = datetime.now().date()
+
+    for assignment in assignments:
+        # Parse and reformat assigned_date
+        try:
+            try:
+                dt_assigned = datetime.strptime(assignment['assigned_date'], "%m/%d/%Y")
+            except ValueError:
+                dt_assigned = datetime.strptime(assignment['assigned_date'], "%Y-%m-%d")
+            assignment['assigned_date'] = dt_assigned.strftime("%m/%d/%Y")
+        except Exception as e:
+            assignment['assigned_date'] = assignment.get('assigned_date', '')
+
+        # Parse and reformat due_date
+        try:
+            try:
+                dt_due = datetime.strptime(assignment['due_date'], "%m/%d/%Y")
+            except ValueError:
+                dt_due = datetime.strptime(assignment['due_date'], "%Y-%m-%d")
+            assignment['due_date'] = dt_due.strftime("%m/%d/%Y")
+        except Exception as e:
+            assignment['due_date'] = assignment.get('due_date', '')
+
+        # Parse and reformat graded_date if it exists
+        try:
+            if assignment.get('graded_date'):
+                try:
+                    dt_graded = datetime.strptime(assignment['graded_date'], "%m/%d/%Y")
+                except ValueError:
+                    dt_graded = datetime.strptime(assignment['graded_date'], "%Y-%m-%d")
+                assignment['graded_date'] = dt_graded.strftime("%m/%d/%Y")
+            else:
+                assignment['graded_date'] = ""
+        except Exception as e:
+            assignment['graded_date'] = assignment.get('graded_date', '')
+
+        # Determine if the due_date has passed (compare only the date part)
+        if dt_due.date() <= now_date:
+            graded_assignments.append(assignment)
+        else:
+            upcoming_assignments.append(assignment)
+
+    return jsonify({"graded_assignments": graded_assignments, "upcoming_assignments": upcoming_assignments})
+
+
+@main.route('/student_class_schedule')
+def student_class_schedule():
+    if verify_role('Student'):
+        return render_template('student/student_class_schedule.html')
+    return redirect(url_for('auth.home'))
+
+@main.route('/api/student_class_schedule', methods=['GET'])
+def api_student_class_schedule():
+    # Get the logged-in student's ID (assumed stored in session as username)
+    student_id = session.get("username")
+    if not student_id:
+        return jsonify({"error": "User not logged in"}), 401
+
+    # Retrieve the student profile to get the enrolled_classes array.
+    student = mongo.db["Student Profile"].find_one(
+        {"student_id": student_id},
+        {"enrolled_classes": 1, "_id": 0}
+    )
+    if not student:
+        return jsonify({"error": "Student profile not found"}), 404
+
+    # Build a mapping from class_id to the student's schedule.
+    enrolled_classes = student.get("enrolled_classes", [])
+    schedule_mapping = {cls.get("class_id"): cls.get("schedule", "N/A") for cls in enrolled_classes}
+
+    # Find teacher profiles whose assigned_classes contain the student.
+    teacher_profiles = list(mongo.db["Teacher Profile"].find(
+        {"assigned_classes.students_enrolled": student_id},
+        {"name": 1, "email": 1, "phone": 1, "assigned_classes": 1, "_id": 0}
+    ))
+
+    # Build the combined schedule list.
+    schedule = []
+    for teacher in teacher_profiles:
+        for cls in teacher.get("assigned_classes", []):
+            if student_id in cls.get("students_enrolled", []):
+                class_id = cls.get("class_id", "")
+                schedule.append({
+                    "teacher_name": teacher.get("name", ""),
+                    "class_number": class_id,
+                    "class_name": cls.get("subject", ""),
+                    "schedule": schedule_mapping.get(class_id, "N/A"),
+                    "email": teacher.get("email", ""),
+                    "phone": teacher.get("phone", "")
+                })
+    return jsonify({"schedule": schedule})
+
+
+@main.route('/student_bus_schedule')
+def student_bus_schedule():
+    if verify_role('Student'):
+        return render_template('student/student_bus_schedule.html')
+    return redirect(url_for('auth.home'))
+
+
+@main.route('/api/student_bus_schedule', methods=['GET'])
+def api_student_bus_schedule():
+    # Get the logged-in student's ID from the session.
+    student_id = session.get("username")
+    if not student_id:
+        return jsonify({"error": "User not logged in"}), 401
+
+    # Query the Student Profile collection for the bus_schedule object.
+    student = mongo.db["Student Profile"].find_one(
+        {"student_id": student_id},
+        {"bus_schedule": 1, "_id": 0}
+    )
+    if not student or "bus_schedule" not in student:
+        return jsonify({"error": "Bus schedule not found"}), 404
+
+    return jsonify({"bus_schedule": student["bus_schedule"]})
+
 
 # Teacher Access Pages
 # Teacher Dashboard
@@ -512,47 +644,260 @@ def parent_dashboard():
         return render_template('parent/parent_dashboard.html', name=name)
     return redirect(url_for('auth.home'))
 
-# Helper function to get student_id from the Parent Profile collection
-def get_student_id(parent_id):
-    parent = parents_collection.find_one({"parent_id": parent_id})
-    return parent.get("student_id") if parent else None
-
-# Parents view attendance for their linked children
-@main.route("/parent_attendance_records")
+# View linked students attendance records
+@main.route('/parent_attendance_records')
 def parent_attendance_records():
-    parent_id = session.get('parent_id')
-    student_id = get_student_id(parent_id)
+    if verify_role('Parent'):
+        return render_template('parent/parent_attendance_records.html')
+    return redirect(url_for('auth.home'))
+
+
+@main.route('/api/parent_students', methods=['GET'])
+def api_parent_students():
+    # Ensure the user logged in is a Parent
+    parent_id = session.get('username')
+    if not parent_id:
+        return jsonify({"error": "User not logged in"}), 401
+
+    # Retrieve the Parent Profile using the session's username (matches parent_id)
+    parent_profile = mongo.db["Parent Profile"].find_one({"parent_id": parent_id})
+    if not parent_profile:
+        return jsonify({"error": "Parent profile not found"}), 404
+
+    # Extract linked students from the parent profile
+    linked_students = parent_profile.get("linked_students", [])
+    student_ids = [student.get("student_id") for student in linked_students]
+
+    # Query the Student Profile collection to get each student's first and last names
+    students = list(mongo.db["Student Profile"].find(
+        {"student_id": {"$in": student_ids}},
+        {"student_id": 1, "first_name": 1, "last_name": 1, "_id": 0}
+    ))
+
+    # Create a list of student objects with id and full name
+    student_list = [{
+        "id": s["student_id"],
+        "name": f"{s.get('first_name', '')} {s.get('last_name', '')}".strip()
+    } for s in students]
+
+    return jsonify({"students": student_list})
+
+
+@main.route('/api/attendance_records', methods=['GET'])
+def api_attendance_records():
+    # Get the student_id from the request parameters
+    student_id = request.args.get("student_id")
     if not student_id:
-        flash("Student not found for this parent!", "danger")
+        return jsonify({"error": "Missing student_id"}), 400
 
-        return render_template("parent/parent_attendance_records.html", attendance_records=[])
-    
-    attendance_records = list(attendance_collection.find({"student_id": student_id}))
-    return render_template("parent/parent_attendance_records.html", attendance_records=attendance_records)
+    # Calculate the date 30 days ago (assumes Attendance.date is stored as 'YYYY-MM-DD')
+    cutoff_date = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
 
-# Parents view Bus Schedule for their linked children
-@main.route("/parent_bus_schedule")
+    # Query the Attendance collection for records of the specified student that are within the last 30 days
+    records = list(mongo.db.Attendance.find(
+        {
+            "student_id": student_id,
+            "date": {"$gte": cutoff_date}
+        },
+        {"class_id": 1, "date": 1, "status": 1, "_id": 0}
+    ))
+
+    return jsonify({"records": records})
+
+# View linked students bus schedule
+@main.route('/parent_bus_schedule')
 def parent_bus_schedule():
-    parent_id = session.get('parent_id')
-    student_id = get_student_id(parent_id)
-    if not student_id:
-        flash("Student not found for this parent!", "danger")
-        
-        return render_template("parent/parent_bus_schedule.html", bus_schedule=[])
-    
-    bus_schedule = list(bus_schedule_collection.find({"student_id": student_id}))
-    return render_template("parent/parent_bus_schedule.html", bus_schedule=bus_schedule)
+    if verify_role('Parent'):
+        return render_template('parent/parent_bus_schedule.html')
+    return redirect(url_for('auth.home'))
 
-# Parents view Class Schedule for their linked children
+
+@main.route('/api/parent_students_bus', methods=['GET'])
+def api_parent_students_bus():
+    # Ensure the parent is logged in
+    parent_id = session.get('username')
+    if not parent_id:
+        return jsonify({"error": "User not logged in"}), 401
+
+    # Retrieve the Parent Profile using the parent_id
+    parent_profile = mongo.db["Parent Profile"].find_one({"parent_id": parent_id})
+    if not parent_profile:
+        return jsonify({"error": "Parent profile not found"}), 404
+
+    # Extract linked students and collect student_ids
+    linked_students = parent_profile.get("linked_students", [])
+    student_ids = [student.get("student_id") for student in linked_students]
+
+    # Query Student Profile collection to get first_name and last_name for each linked student
+    students = list(mongo.db["Student Profile"].find(
+        {"student_id": {"$in": student_ids}},
+        {"student_id": 1, "first_name": 1, "last_name": 1, "_id": 0}
+    ))
+
+    # Build the response list with full names
+    student_list = [{
+        "id": s["student_id"],
+        "name": f"{s.get('first_name', '')} {s.get('last_name', '')}".strip()
+    } for s in students]
+
+    return jsonify({"students": student_list})
+
+
+@main.route('/api/parent_bus_schedule', methods=['GET'])
+def api_parent_bus_schedule():
+    # Get the student_id from query parameters
+    student_id = request.args.get('student_id')
+    if not student_id:
+        return jsonify({"error": "Missing student_id"}), 400
+
+    # Query the Student Profile collection for the bus_schedule details
+    student = mongo.db["Student Profile"].find_one(
+        {"student_id": student_id},
+        {"bus_schedule": 1, "_id": 0}
+    )
+
+    # If no student or no bus_schedule found, return an empty bus_schedule object
+    if not student or "bus_schedule" not in student:
+        return jsonify({"bus_schedule": {}}), 200
+
+    # Get the bus_schedule object (which includes stop_name)
+    bus_schedule = student["bus_schedule"]
+
+    # Optionally, ensure stop_name exists
+    if "stop_name" not in bus_schedule:
+        bus_schedule["stop_name"] = "N/A"
+
+    return jsonify({"bus_schedule": bus_schedule})
+
+# Parents view linked students class schedule
 @main.route('/parent_view_class_schedule')
 def parent_view_class_schedule():
     if verify_role('Parent'):
         return render_template('parent/parent_view_class_schedule.html')
     return redirect(url_for('auth.home'))
 
-# Parents view grades for their linked children
+
+@main.route('/api/parent_class_schedule', methods=['GET'])
+def api_parent_class_schedule():
+    # Retrieves linked students
+    student_id = request.args.get('student_id')
+    if not student_id:
+        return jsonify({"error": "Missing student_id"}), 400
+
+    # Query Teacher Profile collection for teachers whose assigned_classes include the student_id
+    teacher_profiles = list(mongo.db["Teacher Profile"].find(
+        {"assigned_classes.students_enrolled": student_id},
+        {"teacher_id": 1, "name": 1, "email": 1, "phone": 1, "assigned_classes": 1, "_id": 0}
+    ))
+
+    # Query the Student Profile collection to get enrolled_classes for the student
+    student = mongo.db["Student Profile"].find_one(
+        {"student_id": student_id},
+        {"enrolled_classes": 1, "_id": 0}
+    )
+    enrolled_classes = student.get("enrolled_classes", []) if student else []
+    # Build a mapping from class_id to schedule from the student's enrolled_classes
+    schedule_mapping = {cls.get("class_id"): cls.get("schedule", "N/A") for cls in enrolled_classes}
+
+    schedule = []
+    for teacher in teacher_profiles:
+        for cls in teacher.get("assigned_classes", []):
+            # Only include the class if the student is enrolled in it
+            if student_id in cls.get("students_enrolled", []):
+                class_id = cls.get("class_id", "")
+                # Ensure the class_id from the teacher's record matches one in the student's enrolled_classes
+                class_schedule = schedule_mapping.get(class_id, "N/A")
+                schedule.append({
+                    "teacher_name": teacher.get("name", ""),
+                    "class_number": class_id,
+                    "class_name": cls.get("subject", ""),
+                    "email": teacher.get("email", ""),
+                    "phone": teacher.get("phone", ""),
+                    "schedule": class_schedule
+                })
+    return jsonify({"schedule": schedule})
+
+# View linked students grades
 @main.route('/parent_view_student_grades')
 def parent_view_student_grades():
     if verify_role('Parent'):
         return render_template('parent/parent_view_student_grades.html')
     return redirect(url_for('auth.home'))
+
+
+@main.route('/api/parent_students_gradeassignments', methods=['GET'])
+def api_parent_students_gradeassignments():
+    # Ensure the parent is logged in
+    parent_id = session.get('username')
+    if not parent_id:
+        return jsonify({"error": "User not logged in"}), 401
+
+    # Retrieve the Parent Profile using the parent_id
+    parent_profile = mongo.db["Parent Profile"].find_one({"parent_id": parent_id})
+    if not parent_profile:
+        return jsonify({"error": "Parent profile not found"}), 404
+
+    # Extract linked students and collect student_ids
+    linked_students = parent_profile.get("linked_students", [])
+    student_ids = [student.get("student_id") for student in linked_students]
+
+    # Query Student Profile collection to get first_name and last_name for each linked student
+    students = list(mongo.db["Student Profile"].find(
+        {"student_id": {"$in": student_ids}},
+        {"student_id": 1, "first_name": 1, "last_name": 1, "_id": 0}
+    ))
+
+    # Build the response list with full names
+    student_list = [{
+        "id": s["student_id"],
+        "name": f"{s.get('first_name', '')} {s.get('last_name', '')}".strip()
+    } for s in students]
+
+    return jsonify({"students": student_list})
+
+
+@main.route('/api/parent_grades', methods=['GET'])
+def api_parent_grades():
+    student_id = request.args.get('student_id')
+    if not student_id:
+        return jsonify({"error": "Missing student_id"}), 400
+
+    # Calculate cutoff date: assignments assigned within the last 30 days
+    cutoff_date = (datetime.now() - timedelta(days=30)).date()
+
+    # Get all assignments for the student from assignments_grades collection
+    assignments = list(mongo.db["assignments_grades"].find(
+        {"student_id": student_id},
+        {"class_number": 1, "assignment_name": 1, "assigned_date": 1, "due_date": 1, "grade": 1, "_id": 0}
+    ))
+
+    filtered_assignments = []
+    for assignment in assignments:
+        # Parse assigned_date with fallback
+        try:
+            dt_assigned = datetime.strptime(assignment['assigned_date'], "%m/%d/%Y")
+        except ValueError:
+            try:
+                dt_assigned = datetime.strptime(assignment['assigned_date'], "%Y-%m-%d")
+            except Exception as e:
+                print("Error parsing assigned_date for assignment:", assignment, "Error:", e)
+                continue
+
+        # Parse due_date with fallback
+        try:
+            dt_due = datetime.strptime(assignment['due_date'], "%m/%d/%Y")
+        except ValueError:
+            try:
+                dt_due = datetime.strptime(assignment['due_date'], "%Y-%m-%d")
+            except Exception as e:
+                print("Error parsing due_date for assignment:", assignment, "Error:", e)
+                continue
+
+        # Compare only the date parts
+        if dt_assigned.date() >= cutoff_date:
+            # Reformat both dates to MM/DD/YYYY
+            assignment['assigned_date'] = dt_assigned.strftime("%m/%d/%Y")
+            assignment['due_date'] = dt_due.strftime("%m/%d/%Y")
+            filtered_assignments.append(assignment)
+
+    return jsonify({"assignments": filtered_assignments})

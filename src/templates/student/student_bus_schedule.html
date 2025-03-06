@@ -1,88 +1,118 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bus Schedule</title>
-    <link rel="stylesheet" href="/static/styles.css">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #d9eaf6;
-            color: #333;
-            margin: 0;
-            padding: 20px;
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bus Schedule</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <style>
+    /*Main content styling*/
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #d9eaf6;
+      color: #333;
+      margin: 0;
+      padding: 20px;
+    }
+    header {
+      background-color: #007BFF;
+      color: white;
+      padding: 20px;
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+      border-top: 5px solid #004aad;
+      width: 100vw;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 1000;
+      margin: 0;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .content {
+      margin-top: 100px;
+      padding-top: 100px;
+      display: flex;
+      justify-content: center;
+      max-width: 1200px;
+      margin: auto;
+    }
+    /*Styling for Back to Dashboard button*/
+    .back-button {
+      position: fixed;
+      top: 15px;
+      left: 15px;
+      background-color: #007BFF;
+      color: white;
+      padding: 10px 15px;
+      font-size: 16px;
+      font-weight: bold;
+      text-decoration: none;
+      border-radius: 5px;
+      transition: background 0.3s;
+      z-index: 1100;
+    }
+    .back-button:hover {
+      background-color: #0056b3;
+    }
+    /*Table styling*/
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      max-width: 500px;
+      margin-top: 20px;
+    }
+    th, td {
+      padding: 12px;
+      border: 1px solid #ccc;
+      text-align: left;
+    }
+    th {
+      background-color: #007BFF;
+      color: white;
+      width: 40%;
+    }
+  </style>
+  <script>
+    $(document).ready(function(){
+      // Load the bus schedule for the logged-in student
+      $.ajax({
+        url: "/api/student_bus_schedule",
+        type: "GET",
+        success: function(data){
+          var bus_schedule = data.bus_schedule;
+          var tbody = $("#busScheduleTable tbody");
+          tbody.empty();
+          if(bus_schedule && Object.keys(bus_schedule).length > 0) {
+            var rows = '';
+            rows += '<tr><th>Pick-up Time</th><td>' + bus_schedule.pickup_time + '</td></tr>';
+            rows += '<tr><th>Drop-off Time</th><td>' + bus_schedule.dropoff_time + '</td></tr>';
+            rows += '<tr><th>Stop</th><td>' + bus_schedule.stop_name + '</td></tr>';
+            rows += '<tr><th>Route Name</th><td>' + bus_schedule.route + '</td></tr>';
+            tbody.html(rows);
+          } else {
+            tbody.html('<tr><td colspan="2">No bus schedule available.</td></tr>');
+          }
+        },
+        error: function(err){
+          console.error("Error fetching bus schedule", err);
+          $("#busScheduleTable tbody").html('<tr><td colspan="2">Error fetching bus schedule.</td></tr>');
         }
-        header {
-            background-color: #007BFF;
-            color: white;
-            padding: 20px;
-            text-align: center;
-            font-size: 24px;
-            font-weight: bold;
-            border-top: 5px solid #004aad;
-            width: 100vw;
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 1000;
-            margin: 0;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .content {
-            margin-top: 100px;
-            padding-top: 100px;
-            display: flex;
-            justify-content: center;
-            gap: 40px;
-            max-width: 1200px;
-            margin: auto;
-        }
-
-        .back-button {
-            position: fixed;
-            top: 15px;
-            left: 15px;
-            background-color: #007BFF;
-            color: white;
-            padding: 10px 15px;
-            font-size: 16px;
-            font-weight: bold;
-            text-decoration: none;
-            border-radius: 5px;
-            transition: background 0.3s;
-            display: inline-block;
-            z-index: 1100;
-        }
-
-        .back-button:hover {
-            background-color: #0056b3;
-        }
-    </style>
+      });
+    });
+  </script>
 </head>
 <body>
-    <a href="{{ url_for('main.student_dashboard') }}" class="back-button">&larr; Back to Dashboard</a>
-
-    <header>Bus Schedule</header>
-    <div class="content">
-    <table border="1">
-        <thead>
-            <tr>
-                <th>Route</th>
-                <th>Pickup Time</th>
-                <th>Dropoff Time</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for bus in bus_schedule %}
-            <tr>
-                <td>{{ bus.route }}</td>
-                <td>{{ bus.pickup_time }}</td>
-                <td>{{ bus.dropoff_time }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
+  <a href="{{ url_for('main.student_dashboard') }}" class="back-button">&larr; Back to Dashboard</a>
+  <header>Bus Schedule</header>
+  <div class="content">
+    <table id="busScheduleTable">
+      <tbody>
+        <!-- Bus schedule rows will be dynamically populated here -->
+      </tbody>
     </table>
+  </div>
 </body>
 </html>
