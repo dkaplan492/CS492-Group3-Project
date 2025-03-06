@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Teacher Dashboard</title>
     <style>
+        /*Main content stypling*/
         body {
             font-family: Arial, sans-serif;
             margin: 0;
@@ -27,6 +28,7 @@
             flex: 1;
             padding: 50px;
         }
+        /*Dashboard button styling*/
         .sidebar {
             width: 1000px;
             display: flex;
@@ -60,6 +62,7 @@
         .logout:hover {
             background-color: #b02a37 !important;
         }
+        /*Calendar styling*/
         .calendar {
             flex: 1;
             padding: 10px;
@@ -121,7 +124,7 @@
             const firstDay = new Date(currentYear, currentMonth, 1).getDay();
             const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
 
-            // Set the header
+            // Set the header for the appropriate month
             const monthNames = [
                 'January', 'February', 'March', 'April', 'May', 'June',
                 'July', 'August', 'September', 'October', 'November', 'December'

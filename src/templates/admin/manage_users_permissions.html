@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/static/styles.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
+        /*Main Content Styling*/
         body {
             font-family: Arial, sans-serif;
             background-color: #d9eaf6;
@@ -41,6 +42,8 @@
             max-width: 800px;
             margin: auto;
         }
+
+        /*Styling for successful updates message*/
         .message {
             display: none;
             background-color: #28a745;
@@ -50,6 +53,8 @@
             margin-bottom: 10px;
             text-align: center;
         }
+
+        /*Styling for update table*/
         table {
             width: 100%;
             border-collapse: collapse;
@@ -68,6 +73,8 @@
         tr:nth-child(even) {
             background-color: #f2f2f2;
         }
+
+        /*Styling for Back to Dashboard button*/
         .back-button {
             position: fixed;
             top: 15px;
@@ -104,6 +111,7 @@
         </form>
 
         {% if users %}
+        <!-- Table formatting for headers and populating information -->
         <table>
             <tr>
                 <th>Name</th>
@@ -147,6 +155,7 @@
         </form>
     </div>
 
+    <!-- Allows the popup messages to display on the screen -->
     <script>
         function openModal(username, name, email, role) {
             document.getElementById('modalUsername').value = username;
@@ -162,7 +171,7 @@
             if (message && message.textContent.trim() !== '') {
                 setTimeout(() => {
                     message.style.display = 'none';
-                }, 5000);
+                }, 5000); /*Timeout after 5 seconds*/
             }
         });
     </script>

@@ -13,7 +13,7 @@
         {% endwith %}
       {% endif %}     
         <form method="POST" action="{{ url_for('auth.login') }}">
-            <input type="hidden" name="role" value="Teacher">
+            <input type="hidden" name="role" value="Teacher"> <!-- Requires Teacher Role -->
             <label for="username">Username:</label>
             <input type="text" name="username" maxlength="50" required>
             <label for="password">Password:</label>

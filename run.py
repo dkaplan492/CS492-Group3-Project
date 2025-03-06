@@ -1,3 +1,5 @@
+# Initializes and runs the Flask application so that the platform is accessible in website
+
 import os
 from src import create_app
 

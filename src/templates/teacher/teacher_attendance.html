@@ -3,6 +3,7 @@
 <head>
     <title>Teacher Attendance</title>
     <style>
+        /*Main content styling*/
         header {
             background-color: #007BFF;
             color: white;
@@ -37,7 +38,7 @@
             max-width: 1200px;
             margin: auto;
         }
-        /* Left Side: Attendance Form */
+        /*Left Side Attendance Form styling*/
         .attendance-form {
             width: 45%;
             padding: 20px;
@@ -45,7 +46,7 @@
             border-radius: 8px;
             box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
         }
-        /* Right Side: Filters & Records */
+        /*Right Side Filters & Records styling*/
         .records-section {
             width: 45%;
             padding: 20px;
@@ -100,7 +101,7 @@
             height: auto;
             margin: 0 20px;
         }
-        /* Shared Flash Message Styles */
+        /*Shared Flash Message Styles*/
         .message {
             display: none;
             background-color: #28a745;
@@ -111,6 +112,7 @@
             text-align: center;
             width: 100%;
         }
+        /*Styling for Back to Dashboard button*/
         .back-button {
             position: fixed;
             top: 15px;
@@ -131,7 +133,7 @@
         }
     </style>
     <script>
-        // Helper function to display flash messages in a consistent pop-up style.
+        // Helper function to display flash messages
         function showMessage(message, isError = false) {
             var updateMessage = document.getElementById('updateMessage');
             updateMessage.textContent = message;
@@ -151,6 +153,7 @@
             }
         });
 
+        // Updates students by class selected from dropdown if teacher is assigned more than one class_id
         function updateStudents() {
             var classId = document.getElementById('class_id').value;
             if (!classId) {
@@ -158,7 +161,7 @@
                 document.getElementById('entry_student_id').innerHTML = '<option value="">Select a Class First</option>';
                 return;
             }
-            fetch(`/get_students/${classId}`)
+            fetch(`/get_students/${classId}`) // gets students based on class_id
                 .then(response => response.json())
                 .then(data => {
                     var filterDropdown = document.getElementById('filter_student_id');
@@ -210,7 +213,7 @@
         </div>
         <!-- Flexbox Layout -->
         <div class="container">
-            <!-- Left Side: Attendance Submission Form -->
+            <!-- Left Side Attendance Submission Form -->
             <div class="attendance-form">
                 <h2>Submit New Attendance Record</h2>
                 <form method="POST" action="{{ url_for('main.teacher_attendance') }}">
@@ -234,7 +237,7 @@
             </div>
             <!-- Vertical Divider -->
             <div class="divider"></div>
-            <!-- Right Side: Filter & Existing Records -->
+            <!-- Right Side Filter & Existing Records -->
             <div class="records-section">
                 <h2>Filter Attendance Records</h2>
                 <form id="filterForm" method="GET" action="{{ url_for('main.teacher_attendance') }}">
