@@ -1,98 +1,167 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Child's Attendance Records</title>
-    <link rel="stylesheet" href="/static/styles.css">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #d9eaf6;
-            color: #333;
-            margin: 0;
-            padding: 20px;
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Child's Attendance Records</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <style>
+    /*Main content styling*/
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #d9eaf6;
+      color: #333;
+      margin: 0;
+      padding: 20px;
+    }
+    header {
+      background-color: #007BFF;
+      color: white;
+      padding: 20px;
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+      border-top: 5px solid #004aad;
+      width: 100vw;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 1000;
+      margin: 0;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .content {
+      margin-top: 100px;
+      padding-top: 100px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      max-width: 1200px;
+      margin: auto;
+    }
+    /*Styling for Back to Dashboard Button*/
+    .back-button {
+      position: fixed;
+      top: 15px;
+      left: 15px;
+      background-color: #007BFF;
+      color: white;
+      padding: 10px 15px;
+      font-size: 16px;
+      font-weight: bold;
+      text-decoration: none;
+      border-radius: 5px;
+      transition: background 0.3s;
+      display: inline-block;
+      z-index: 1100;
+    }
+    .back-button:hover {
+      background-color: #0056b3;
+    }
+    /*Table styling*/
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      max-width: 800px;
+    }
+    th, td {
+      padding: 12px;
+      border: 1px solid #ccc;
+      text-align: left;
+    }
+    th {
+      background-color: #007BFF;
+      color: #fff;
+    }
+    select {
+      padding: 8px;
+      font-size: 16px;
+    }
+  </style>
+  <script>
+    $(document).ready(function () {
+      // Load parent's linked students on page load
+      $.ajax({
+        url: "/api/parent_students",
+        type: "GET",
+        success: function (data) {
+          var dropdown = $("#studentDropdown");
+          dropdown.empty();
+          $.each(data.students, function (index, student) {
+            dropdown.append('<option value="' + student.id + '">' + student.name + "</option>");
+          });
+          // Load attendance for the first student in the dropdown
+          if (data.students.length > 0) {
+            loadAttendance(data.students[0].id);
+          }
+        },
+        error: function (err) {
+          console.error("Error fetching linked students", err);
         }
-        header {
-            background-color: #007BFF;
-            color: white;
-            padding: 20px;
-            text-align: center;
-            font-size: 24px;
-            font-weight: bold;
-            border-top: 5px solid #004aad;
-            width: 100vw;
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 1000;
-            margin: 0;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .content {
-            margin-top: 100px;
-            padding-top: 100px;
-            display: flex;
-            justify-content: center;
-            gap: 40px;
-            max-width: 1200px;
-            margin: auto;
-        }
+      });
 
-        .back-button {
-            position: fixed;
-            top: 15px;
-            left: 15px;
-            background-color: #007BFF;
-            color: white;
-            padding: 10px 15px;
-            font-size: 16px;
-            font-weight: bold;
-            text-decoration: none;
-            border-radius: 5px;
-            transition: background 0.3s;
-            display: inline-block;
-            z-index: 1100;
-        }
+      // When a different student is selected, load their attendance records
+      $("#studentDropdown").change(function () {
+        var student_id = $(this).val();
+        loadAttendance(student_id);
+      });
+    });
 
-        .back-button:hover {
-            background-color: #0056b3;
+    function loadAttendance(student_id) {
+      $.ajax({
+        url: "/api/attendance_records",
+        type: "GET",
+        data: { student_id: student_id },
+        success: function (data) {
+          var tableBody = $("#attendanceTable tbody");
+          tableBody.empty();
+          if (data.records && data.records.length > 0) {
+            $.each(data.records, function (index, record) {
+              tableBody.append(
+                "<tr><td>" +
+                  record.class_id +
+                  "</td><td>" +
+                  record.date +
+                  "</td><td>" +
+                  record.status +
+                  "</td></tr>"
+              );
+            });
+          } else {
+            tableBody.append("<tr><td colspan='3'>No attendance records found for the last 30 days.</td></tr>");
+          }
+        },
+        error: function (err) {
+          console.error("Error fetching attendance records", err);
         }
-    </style>
+      });
+    }
+  </script>
 </head>
 <body>
-    <a href="{{ url_for('main.parent_dashboard') }}" class="back-button">&larr; Back to Dashboard</a>
-
-    <header>Child's Attendance Records</header>
-    <div class="content">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div class="container">
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ category }}" role="alert">
-                            {{ message }}
-                        </div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        {% endwith %}  
-
-    <table border="1">
+  <a href="{{ url_for('main.parent_dashboard') }}" class="back-button">&larr; Back to Dashboard</a>
+  <header>Child's Attendance Records</header>
+  <div class="content">
+    <div>
+      <label for="studentDropdown">Select Student:</label>
+      <select id="studentDropdown"></select>
+    </div>
+    <div>
+      <table id="attendanceTable">
         <thead>
-            <tr>
-                <th>Date</th>
-                <th>Status</th>
-            </tr>
+          <tr>
+            <th>Class</th>
+            <th>Date</th>
+            <th>Status</th>
+          </tr>
         </thead>
         <tbody>
-            {% for record in attendance_records %}
-            <tr>
-                <td>{{ record.date }}</td>
-                <td>{{ record.status }}</td>
-            </tr>
-            {% endfor %}
+          <!-- Attendance records will be dynamically populated here -->
         </tbody>
-    </table>
+      </table>
+    </div>
+  </div>
 </body>
 </html>

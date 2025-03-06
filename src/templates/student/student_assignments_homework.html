@@ -1,88 +1,206 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Assignments & Homework</title>
-    <link rel="stylesheet" href="/static/styles.css">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #d9eaf6;
-            color: #333;
-            margin: 0;
-            padding: 20px;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Assignments & Homework</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <style>
+    /*Main content styling*/
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #d9eaf6;
+      color: #333;
+      margin: 0;
+      padding: 20px;
+    }
+    header {
+      background-color: #007BFF;
+      color: white;
+      padding: 20px;
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+      border-top: 5px solid #004aad;
+      width: 100vw;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 1000;
+      margin: 0;
+      box-shadow: 0px 4px 6px rgba(0,0,0,0.1);
+    }
+    .content {
+      margin-top: 100px;
+      padding-top: 100px;
+      max-width: 1200px;
+      margin: auto;
+    }
+    /*Styling for Back to Dashboard button*/
+    .back-button {
+      position: fixed;
+      top: 15px;
+      left: 15px;
+      background-color: #007BFF;
+      color: white;
+      padding: 10px 15px;
+      font-size: 16px;
+      font-weight: bold;
+      text-decoration: none;
+      border-radius: 5px;
+      transition: background 0.3s;
+      z-index: 1100;
+    }
+    .back-button:hover {
+      background-color: #0056b3;
+    }
+    /*Table Styling*/
+    select {
+      padding: 8px;
+      font-size: 16px;
+      margin-bottom: 20px;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 20px;
+    }
+    th, td {
+      padding: 12px;
+      border: 1px solid #ccc;
+      text-align: left;
+    }
+    th {
+      background-color: #007BFF;
+      color: white;
+    }
+    .table-container {
+      margin-bottom: 40px;
+    }
+  </style>
+  <script>
+    $(document).ready(function(){
+      // Populate the class dropdown
+      $.ajax({
+        url: "/api/student_classes",
+        type: "GET",
+        success: function(data){
+          var dropdown = $("#classDropdown");
+          dropdown.empty();
+          $.each(data.classes, function(index, cls){
+            // Display the class ID - Subject
+            dropdown.append('<option value="' + cls.id + '">' + cls.id + (cls.subject ? " - " + cls.subject : "") + '</option>');
+          });
+          if(data.classes.length > 0){
+            loadAssignments(data.classes[0].id);
+          }
+        },
+        error: function(err){
+          console.error("Error fetching student classes", err);
         }
-        header {
-            background-color: #007BFF;
-            color: white;
-            padding: 20px;
-            text-align: center;
-            font-size: 24px;
-            font-weight: bold;
-            border-top: 5px solid #004aad;
-            width: 100vw;
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 1000;
-            margin: 0;
-            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .content {
-            margin-top: 100px;
-            padding-top: 100px;
-            display: flex;
-            justify-content: center;
-            gap: 40px;
-            max-width: 1200px;
-            margin: auto;
-        }
+      });
 
-        .back-button {
-            position: fixed;
-            top: 15px;
-            left: 15px;
-            background-color: #007BFF;
-            color: white;
-            padding: 10px 15px;
-            font-size: 16px;
-            font-weight: bold;
-            text-decoration: none;
-            border-radius: 5px;
-            transition: background 0.3s;
-            display: inline-block;
-            z-index: 1100;
-        }
+      // When a different class is selected, load its assignments.
+      $("#classDropdown").change(function(){
+        var class_id = $(this).val();
+        loadAssignments(class_id);
+      });
+    });
 
-        .back-button:hover {
-            background-color: #0056b3;
+    function loadAssignments(class_id){
+      $.ajax({
+        url: "/api/student_assignments_homework",
+        type: "GET",
+        data: { class_id: class_id },
+        success: function(data){
+          // Populate Graded Assignments table
+          var tbodyGraded = $("#gradedTable tbody");
+          tbodyGraded.empty();
+          if(data.graded_assignments && data.graded_assignments.length > 0){
+            $.each(data.graded_assignments, function(index, assignment){
+              var row = "<tr>";
+              row += "<td>" + assignment.assignment_name + "</td>";
+              row += "<td>" + assignment.assigned_date + "</td>";
+              row += "<td>" + assignment.due_date + "</td>";
+              row += "<td>" + (assignment.grade !== null ? assignment.grade : "") + "</td>";
+              row += "<td>" + assignment.graded_date + "</td>";
+              row += "</tr>";
+              tbodyGraded.append(row);
+            });
+          } else {
+            tbodyGraded.html("<tr><td colspan='5'>No graded assignments found.</td></tr>");
+          }
+          
+          // Populate Upcoming Due Assignments table
+          var tbodyUpcoming = $("#upcomingTable tbody");
+          tbodyUpcoming.empty();
+          if(data.upcoming_assignments && data.upcoming_assignments.length > 0){
+            $.each(data.upcoming_assignments, function(index, assignment){
+              var row = "<tr>";
+              row += "<td>" + assignment.assignment_name + "</td>";
+              row += "<td>" + assignment.assigned_date + "</td>";
+              row += "<td>" + assignment.due_date + "</td>";
+              row += "<td>" + (assignment.grade !== null ? assignment.grade : "") + "</td>";
+              row += "<td>" + assignment.graded_date + "</td>";
+              row += "</tr>";
+              tbodyUpcoming.append(row);
+            });
+          } else {
+            tbodyUpcoming.html("<tr><td colspan='5'>No upcoming assignments found.</td></tr>");
+          }
+        },
+        error: function(err){
+          console.error("Error fetching assignments", err);
+          $("#gradedTable tbody").html("<tr><td colspan='5'>Error fetching graded assignments.</td></tr>");
+          $("#upcomingTable tbody").html("<tr><td colspan='5'>Error fetching upcoming assignments.</td></tr>");
         }
-    </style>
+      });
+    }
+  </script>
 </head>
 <body>
-    <a href="{{ url_for('main.student_dashboard') }}" class="back-button">&larr; Back to Dashboard</a>
-
-    <header>Assignments & Homework</header>
-    <div class="content">
-    <table border="1">
+  <a href="{{ url_for('main.student_dashboard') }}" class="back-button">&larr; Back to Dashboard</a>
+  <header>Assignments & Homework</header>
+  <div class="content">
+    <div>
+      <label for="classDropdown">Select Class:</label>
+      <select id="classDropdown"></select>
+    </div>
+    <div class="table-container">
+      <h2>Upcoming Due Assignments</h2>
+      <table id="upcomingTable">
         <thead>
-            <tr>
-                <th>Class</th>
-                <th>Assignment</th>
-                <th>Due Date</th>
-            </tr>
+          <tr>
+            <th>Assignment Name</th>
+            <th>Assigned Date</th>
+            <th>Due Date</th>
+            <th>Grade</th>
+            <th>Graded Date</th>
+          </tr>
         </thead>
         <tbody>
-            {% for assignment in assignments %}
-            <tr>
-                <td>{{ assignment.class_number }}</td>
-                <td>{{ assignment.assignment_name }}</td>
-                <td>{{ assignment.due_date }}</td>
-            </tr>
-            {% endfor %}
+          <!-- Upcoming assignments will be populated here -->
         </tbody>
-    </table>
+      </table>
+    </div>
+    <div class="table-container">
+        <h2>Graded Assignments</h2>
+        <table id="gradedTable">
+          <thead>
+            <tr>
+              <th>Assignment Name</th>
+              <th>Assigned Date</th>
+              <th>Due Date</th>
+              <th>Grade</th>
+              <th>Graded Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Graded assignments will be populated here -->
+          </tbody>
+        </table>
+      </div>
+  </div>
 </body>
 </html>

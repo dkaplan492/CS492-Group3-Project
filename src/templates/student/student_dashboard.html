@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Dashboard</title>
     <style>
+        /*Main content styling*/
         body {
             font-family: Arial, sans-serif;
             margin: 0;
@@ -27,6 +28,7 @@
             flex: 1;
             padding: 50px;
         }
+        /*Button styling*/
         .sidebar {
             width: 1000px;
             display: flex;
@@ -60,6 +62,7 @@
         .logout:hover {
             background-color: #b02a37 !important;
         }
+        /*Calendar styling*/
         .calendar {
             flex: 1;
             padding: 10px;
@@ -99,7 +102,7 @@
         <div class="sidebar">
             <a href="{{ url_for('main.student_assignments_homework') }}">Assignments and Homework</a>
             <a href="{{ url_for('main.student_bus_schedule') }}">Bus Schedule</a>
-            <a href="{{ url_for('main.student_classes_and_grades') }}">Classes and Grades</a>
+            <a href="{{ url_for('main.student_class_schedule') }}">Class Schedule</a>
             <a href="{{ url_for('auth.logout') }}" class="logout">Logout</a>
         </div>
         <div class="calendar">

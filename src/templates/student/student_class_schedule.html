@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>View Student Schedule</title>
+  <title>Class Schedule</title>
   <link rel="stylesheet" href="/static/styles.css">
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <style>
@@ -29,15 +29,11 @@
       left: 0;
       z-index: 1000;
       margin: 0;
-      box-shadow: 0px 4px 6px rgba(0,0,0,0.1);
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
     }
     .content {
       margin-top: 100px;
       padding-top: 100px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 20px;
       max-width: 1200px;
       margin: auto;
     }
@@ -59,15 +55,10 @@
     .back-button:hover {
       background-color: #0056b3;
     }
-    /*Table styling*/
-    select {
-      padding: 8px;
-      font-size: 16px;
-    }
+    /*Styling for Table*/
     table {
       border-collapse: collapse;
       width: 100%;
-      max-width: 900px;
       margin-top: 20px;
     }
     th, td {
@@ -82,57 +73,34 @@
   </style>
   <script>
     $(document).ready(function(){
-      // Populate dropdown with parent's linked students
-      $.ajax({
-        url: "/api/parent_students",
-        type: "GET",
-        success: function(data) {
-          var dropdown = $("#studentDropdown");
-          dropdown.empty();
-          $.each(data.students, function(index, student) {
-            dropdown.append('<option value="' + student.id + '">' + student.name + '</option>');
-          });
-          if (data.students.length > 0) {
-            loadClassSchedule(data.students[0].id);
-          }
-        },
-        error: function(err) {
-          console.error("Error fetching linked students", err);
-        }
-      });
-
-      // When a different student is selected, load the corresponding class schedule
-      $("#studentDropdown").change(function(){
-        var student_id = $(this).val();
-        loadClassSchedule(student_id);
-      });
+      // Load the student's class schedule
+      loadClassSchedule();
     });
 
-    function loadClassSchedule(student_id) {
+    function loadClassSchedule(){
       $.ajax({
-        url: "/api/parent_class_schedule",
+        url: "/api/student_class_schedule",
         type: "GET",
-        data: { student_id: student_id },
-        success: function(data) {
+        success: function(data){
           var tbody = $("#scheduleTable tbody");
           tbody.empty();
-          if (data.schedule && data.schedule.length > 0) {
-            $.each(data.schedule, function(index, item) {
+          if(data.schedule && data.schedule.length > 0){
+            $.each(data.schedule, function(index, item){
               var row = "<tr>";
               row += "<td>" + item.teacher_name + "</td>";
               row += "<td>" + item.class_number + "</td>";
               row += "<td>" + item.class_name + "</td>";
+              row += "<td>" + item.schedule + "</td>";
               row += "<td>" + item.email + "</td>";
               row += "<td>" + item.phone + "</td>";
-              row += "<td>" + item.schedule + "</td>";
               row += "</tr>";
               tbody.append(row);
             });
           } else {
-            tbody.html("<tr><td colspan='6'>No class schedule found for this student.</td></tr>");
+            tbody.html("<tr><td colspan='6'>No class schedule found.</td></tr>");
           }
         },
-        error: function(err) {
+        error: function(err){
           console.error("Error fetching class schedule", err);
           $("#scheduleTable tbody").html("<tr><td colspan='6'>Error fetching class schedule.</td></tr>");
         }
@@ -141,30 +109,24 @@
   </script>
 </head>
 <body>
-  <a href="{{ url_for('main.parent_dashboard') }}" class="back-button">&larr; Back to Dashboard</a>
-  <header>View Student Schedule</header>
+  <a href="{{ url_for('main.student_dashboard') }}" class="back-button">&larr; Back to Dashboard</a>
+  <header>Class Schedule</header>
   <div class="content">
-    <div>
-      <label for="studentDropdown">Select Student:</label>
-      <select id="studentDropdown"></select>
-    </div>
-    <div>
-      <table id="scheduleTable">
-        <thead>
-          <tr>
-            <th>Teacher Name</th>
-            <th>Class Number</th>
-            <th>Class Name</th>
-            <th>Email</th>
-            <th>Phone</th>
-            <th>Schedule</th>
-          </tr>
-        </thead>
-        <tbody>
-          <!-- Schedule records will be dynamically populated here -->
-        </tbody>
-      </table>
-    </div>
+    <table id="scheduleTable">
+      <thead>
+        <tr>
+          <th>Teacher Name</th>
+          <th>Class Number</th>
+          <th>Class Name</th>
+          <th>Schedule</th>
+          <th>Email</th>
+          <th>Phone</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Class schedule records will be dynamically populated here -->
+      </tbody>
+    </table>
   </div>
 </body>
 </html>
